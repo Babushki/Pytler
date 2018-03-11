@@ -1,0 +1,57 @@
+\documentclass{article}
+
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+
+
+\title{\Huge{
+  \indexspace \textbf{Politechnika Poznańska Wydział Elektryczny Instytut Automatyki, Robotyki i Inżynierii Informatycznej}  \indexspace Telefonia IP \indexspace Komunikator głosowy VoIP \indexspace \textbf{"Pytler"}}}
+
+\author{Patryk Mroczyński \and Daniel Staśczak}
+
+\begin{document}
+
+  \pagenumbering{gobble}
+  \maketitle
+  \newpage
+  \tableofcontents
+  \newpage
+  \pagenumbering{arabic}
+
+  \section{Charakterystyka ogólna projektu}
+  \paragraph{} Pytler to komunikator działający w technologii VoIP. Umożliwia on wykonywanie połączeń głosowych między dwoma osobami. Aplikacja obsługuje funkcjonalności takie jak zarządzanie listą znajomych, na której użytkownik może zobaczyć status oraz opis tekstowy swoich znajomych, oraz ustawianie indywidualnych dzwonków dla każdego kontaktu.
+  \section{Architektura systemu}
+  \paragraph{} System oparty jest na modelu klient-serwer, w którym klient (łącznie z logiką po stronie klienta i interfejsem) jest uruchamiany na komputerze użytkownika jako aplikacja desktopowa, a na maszynie serwerowej działa silnik relacyjnej bazy danych oraz program ją obsługujący i wykonujący operacje takie jak obsługa komunikacji między aplikacjami klienckimi oraz zarządzanie kontami użytkowników.
+  \section{Wymagania}
+  \paragraph{} W rozdziale opisane są wymagania funkcjonalne oraz niefunkcjonalne z podziałem na aktorów.
+  \subsection{Wymagania funkcjonalne}
+  \begin{enumerate}
+    \item Niezalogowany użytkownik może się zarejestrować.
+    \item Zarejestrowany użytkownik może się zalogować.
+    \item Zalogowany użytkownik może wysłać innemu zarejestrowanemu użytkownikowi zaproszenie do swojej listy znajomych.
+    \item Zaproszenie do znajomych może zostać zaakceptowane lub odrzucone.
+    \item Zalogowany użytkownik może usunąć znajomego z listy znajomych.
+    \item Zalogowany użytkownik może zadzwonić do użytkownika ze swojej listy znajomych.
+    \item Użytkownik, do którego jest wykonywane połączenie może je odrzucić lub odebrać.
+    \item Podczas rozmowy możliwe jest wyciszenie mikrofonu i dźwięku za pośrednictwem interfejsu aplikacji.
+    \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
+    \item Zalogowany użytkownik ma możliwość ustawienia opisu, który będzie wyświetlany jego znajomym.
+    \item Użytkownik inicjujący rozmowę może wybrać między połączeniem nieszyfrowanym a szyfrowanym.
+  \end{enumerate}
+  \subsection{Wymagania niefunkcjonalne}
+  \begin{enumerate}
+    \item Aby użytkownik mógł korzystać z funkcjonalności serwisu musi być zalogowany.
+    \item Dane użytkownika są przechowywane w bazie danych.
+    \item Hasło użytkownika jest przechowywane jako skrót SHA-256.
+    \item Aplikacja działa w architekturze klient-serwer.
+    \item Aplikacja serwerowa wykorzystuje relacyjną bazę danych.
+    \item Podczas oczekiwania na rozmowę użytkownikowi odtwarza się utwór Jana Sebastiana Bacha - “Bouree In E Minor”.
+    \item Po odebraniu połączenia użytkownikowi zostaje odtworzony krótki sygnał dźwiękowy.
+    \item Próba wykonania połączenia do użytkownika, który aktualnie rozmawia lub nie jest zalogowany kończy się niepowodzeniem.
+    \item Użytkownik, do którego próba połączenia się nie powiodła otrzymuje informację tekstową.
+    \item Użytkownik podczas próby połączenia do niego słyszy utwór dźwiękowy.
+    \item Połączenia szyfrowane używają szyfrowania symetrycznego z wymianą kluczy poprzez algorytm Diffiego-Hellmana.
+  \end{enumerate}
+  \section{Narzędzia}
+  \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 16.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python3 dla aplikacji serwerowej oraz Java dla aplikacji klienckiej.
+\end{document}
