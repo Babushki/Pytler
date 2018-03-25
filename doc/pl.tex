@@ -35,7 +35,7 @@
     \item Użytkownik, do którego jest wykonywane połączenie może je odrzucić lub odebrać.
     \item Podczas rozmowy możliwe jest wyciszenie mikrofonu i dźwięku za pośrednictwem interfejsu aplikacji.
     \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
-    \item Zalogowany użytkownik ma możliwość ustawienia opisu, który będzie wyświetlany jego znajomym.
+    \item Zalogowany użytkownik ma możliwość ustawienia opisu i zdjęcia profilowego, które będą wyświetlane jego znajomym.
     \item Użytkownik inicjujący rozmowę może wybrać między połączeniem nieszyfrowanym a szyfrowanym.
   \end{enumerate}
   \subsection{Wymagania niefunkcjonalne}
@@ -50,7 +50,12 @@
     \item Próba wykonania połączenia do użytkownika, który aktualnie rozmawia lub nie jest zalogowany kończy się niepowodzeniem.
     \item Użytkownik, do którego próba połączenia się nie powiodła otrzymuje informację tekstową.
     \item Użytkownik podczas próby połączenia do niego słyszy utwór dźwiękowy.
-    \item Połączenia szyfrowane używają szyfrowania symetrycznego z wymianą kluczy poprzez algorytm Diffiego-Hellmana.
+    \item Połączenia szyfrowane używają szyfrowania symetrycznego AES-256 z wymianą kluczy poprzez algorytm Diffiego-Hellmana.
+    \item Oczekiwanie na odebranie połączenia trwa maksymalnie 50 sekund, po czym automatycznie zostaje ono odrzucone.
+    \item Do korzystania z aplikacji wymagane jest posiadanie mikrofonu oraz słuchawek lub głośników.
+    \item W trakcie komunikacji między aplikacją kliencką a serwerową używany jest protokół TCP.
+    \item W trakcie rozmowy między użytkownikami wykorzystywany jest protokół UDP.
+    \item Do kompresji dźwięku podczas rozmowy między użytkownikami wykorzystywany jest kodek ADPCM.
   \end{enumerate}
   \section{Narzędzia}
   \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 16.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python3 dla aplikacji serwerowej oraz Java dla aplikacji klienckiej.
