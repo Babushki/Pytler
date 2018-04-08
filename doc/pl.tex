@@ -24,6 +24,7 @@
   \paragraph{} Pytler to komunikator działający w technologii VoIP. Umożliwia on wykonywanie połączeń głosowych między dwoma osobami. Aplikacja obsługuje funkcjonalności takie jak zarządzanie listą znajomych, na której użytkownik może zobaczyć status oraz opis tekstowy swoich znajomych, oraz ustawianie indywidualnych dzwonków dla każdego kontaktu.
   \section{Architektura systemu}
   \paragraph{} System oparty jest na modelu klient-serwer, w którym klient (łącznie z logiką po stronie klienta i interfejsem) jest uruchamiany na komputerze użytkownika jako aplikacja desktopowa, a na maszynie serwerowej działa silnik relacyjnej bazy danych oraz program ją obsługujący i wykonujący operacje takie jak obsługa komunikacji między aplikacjami klienckimi oraz zarządzanie kontami użytkowników.
+  Serwer jedynie pośredniczy w nawiązywaniu połączenia, natomiast właściwa rozmowa przebiega bez jego uczestnictwa (klient-klient).
   \section{Wymagania}
   \paragraph{} W rozdziale opisane są wymagania funkcjonalne oraz niefunkcjonalne z podziałem na aktorów.
   \subsection{Wymagania funkcjonalne}
