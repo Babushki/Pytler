@@ -25,6 +25,25 @@
   \section{Architektura systemu}
   \paragraph{} System oparty jest na modelu klient-serwer, w którym klient (łącznie z logiką po stronie klienta i interfejsem) jest uruchamiany na komputerze użytkownika jako aplikacja desktopowa, a na maszynie serwerowej działa silnik relacyjnej bazy danych oraz program ją obsługujący i wykonujący operacje takie jak obsługa komunikacji między aplikacjami klienckimi oraz zarządzanie kontami użytkowników.
   Serwer jedynie pośredniczy w nawiązywaniu połączenia, natomiast właściwa rozmowa przebiega bez jego uczestnictwa (klient-klient).
+  \subsection{Mikroserwisy}
+  W podrozdziale zostały wylistowane mikroserwisy wraz z dostępnymi dla nich metodami.
+  \begin{itemize}
+    \item UserApi
+    \begin{itemize}
+      \item GET /api/users - zwraca listę wszystkich użytkowników.
+      \item GET /api/users/:id - zwraca szczegółowe informacje o użytkowniku.
+      \item POST /api/users - tworzy nowego użytkownika.
+      \item PATCH /api/users/:token - aktywuje konto użytkownika.
+      \item DELETE /api/users/:id - usuwa konto użytkownika.
+    \end{itemize}
+    \item ContactApi
+    \begin{itemize}
+      \item GET /api/contacts/:id - zwraca listę kontaktów dla użytkownika.
+      \item POST /api/contacts - dodaje zaproszenie do znajomych.
+      \item PUT /api/contacts/:id - aktualizuje status kontaktu.
+      \item DELETE /api/contacts/:id - usuwa kontakt z listy znajomych.
+    \end{itemize}
+  \end{itemize}
   \section{Wymagania}
   \paragraph{} W rozdziale opisane są wymagania funkcjonalne oraz niefunkcjonalne z podziałem na aktorów.
   \subsection{Wymagania funkcjonalne}
@@ -67,6 +86,7 @@
     \item Zdjęcia profilowe oraz wybrane przez użytkownika dzwonki przechowywane są na serwerze.
     \item Przed usunięciem konta użytkownik otrzymuje ostrzeżenie, że jest to nieodwracalne.
     \item Usunięcie konta przez użytkownika wymaga autoryzacji.
+    \item Autoryzowanie użytkownika odbywa się za pomocą metody Basic Auth.
   \end{enumerate}
   \section{Narzędzia}
   \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 16.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python 3.6 dla aplikacji serwerowej oraz Jython dla aplikacji klienckiej.
