@@ -1,0 +1,48 @@
+*primary_key*
+_foreign_key_
+
+users:
+int : *id*
+varchar : login
+varchar : password
+varchar : email
+big int : created_at (unix timestamp)
+bool : activated
+varchar : activation_key/activation_token
+blob : profile_image
+varchar : description
+
+sessions:
+int : *id*
+int : _user_id_
+big int : created_at (unix timestamp)
+big int : expiration_date (unix timestamp)
+
+contacts:
+int : *id*
+int : _first_user_id_
+int : _second_user_id_
+int : _invitation_id_
+blob : ringtone
+
+invitation_statuses:
+int : *id* // pending,
+           // accepted,
+           // rejected_unseen (zaproszenie odrzucone, info o tym do ujrzenia przez zapraszającego),
+           // rejected (zaproszenie odrzucone, info o tym ujrzane przez zapraszającego),
+           // accepted_obsolete??
+
+invitations:
+int : *id*
+int : _inviting_user_id_
+int : _invited_user_id_
+int : _invitation_status_id_
+big int : created_at (unix timestamp)
+big int : last_modification (unix timestamp)
+
+call_history:
+int : *id*
+int : _caller_id_
+int : _receiver_id_
+big int : datetime (unix timestamp)
+big int : duration (unix timestamp) // Wartość równa 0 (lub NULL) oznacza, że połączenie zostało odrzucone
