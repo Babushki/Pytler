@@ -108,4 +108,15 @@
         \caption[]{Diagram związków encji}
         \label{fig:er}
     \end{figure}
+
+    Zgodnie z rysunkiem \ref{fig:er}, w bazie danych znajduje się sześć tabel. Tabela \texttt{users} zawiera informacje o zarejestrowanych użytkownikach - m.in. ich nazwę konta, hasło przetworzone funkcją skrótu oraz adres email. Odwołania do tej tabeli znajdują się w tabelach \texttt{sessions}, która przechowuje informacje o sesjach - o ich czasie rozpoczęcia oraz zakończenia, \texttt{invitations}, która zawiera informacje o zaproszeniach do listy znajomych wysyłanych przez użytkowników, \texttt{contacts}, w której znajdują się wpisy o kontaktach poszczególnych użytkowników oraz w tabeli \texttt{call\_history}, która przechowuje dane o historiach połączeń pomiędzy użytkownikami. Dostępne statusy zaproszeń znajdują się w tabeli \texttt{invitation\_statuses}.
+
+    \begin{figure}[H]
+      \centering
+        \includegraphics[width=1.0\linewidth]{assets/rel.png}
+        \caption[]{Model relacyjny}
+        \label{fig:rel}
+    \end{figure}
+
+    Na rysunku \ref{fig:rel} znajduje się rozwinięcie diagramu związków encji do modelu relacyjnego. Prezentuje on kolumny, które należą do poszczególnych tabel wraz z oznaczeniem kluczy głównych (żółty klucz) i obcych (zielona strzałka). Opcjonalność wartości w kolumnach jest oznaczona białą literą "N", a unikalność czerwoną literą "U".
 \end{document}
