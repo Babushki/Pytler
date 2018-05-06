@@ -52,7 +52,7 @@
   \subsection{Wymagania funkcjonalne}
   \begin{enumerate}
     \item Niezalogowany użytkownik może się zarejestrować.
-    \item Zarejestrowany użytkownik może się zalogować.
+    \item Niezalogowany użytkownik może się zalogować.
     \item Zalogowany użytkownik może wysłać innemu zarejestrowanemu użytkownikowi zaproszenie do swojej listy znajomych.
     \item Zaproszenie do znajomych może zostać zaakceptowane lub odrzucone.
     \item Zalogowany użytkownik może usunąć znajomego z listy znajomych.
@@ -62,7 +62,7 @@
     \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
     \item Zalogowany użytkownik ma możliwość ustawienia opisu i zdjęcia profilowego, które będą wyświetlane jego znajomym.
     \item Użytkownik inicjujący rozmowę może wybrać między połączeniem nieszyfrowanym a szyfrowanym.
-    \item Zarejestrowany użytkownik może zresetować swoje hasło.
+    \item Niezalogowany użytkownik może zresetować swoje hasło.
     \item Zalogowany użytkownik może zmienić swoje hasło oraz adres e-mail.
     \item Zalogowany użytkownik ma możliwość usunięcia swojego konta.
   \end{enumerate}
@@ -109,7 +109,7 @@
         \label{fig:er}
     \end{figure}
 
-    Zgodnie z rysunkiem \ref{fig:er}, w bazie danych znajduje się sześć tabel. Tabela \texttt{users} zawiera informacje o zarejestrowanych użytkownikach - m.in. ich nazwę konta, hasło przetworzone funkcją skrótu oraz adres email. Odwołania do tej tabeli znajdują się w tabelach \texttt{sessions}, która przechowuje informacje o sesjach - o ich czasie rozpoczęcia oraz zakończenia, \texttt{invitations}, która zawiera informacje o zaproszeniach do listy znajomych wysyłanych przez użytkowników, \texttt{contacts}, w której znajdują się wpisy o kontaktach poszczególnych użytkowników oraz w tabeli \texttt{call\_history}, która przechowuje dane o historiach połączeń pomiędzy użytkownikami. Dostępne statusy zaproszeń znajdują się w tabeli \texttt{invitation\_statuses}.
+    Zgodnie z rysunkiem \ref{fig:er}, w bazie danych znajduje się sześć tabel. Tabela \texttt{users} zawiera informacje o zarejestrowanych użytkownikach - m.in. ich nazwę konta, hasło przechowywane jako wynik funkcji skrótu oraz adres email. Odwołania do tej tabeli znajdują się w tabelach \texttt{sessions}, która przechowuje informacje o sesjach - o ich czasie rozpoczęcia oraz zakończenia, \texttt{invitations}, która zawiera informacje o zaproszeniach do listy znajomych wysyłanych przez użytkowników, \texttt{contacts}, w której znajdują się wpisy o kontaktach poszczególnych użytkowników oraz w tabeli \texttt{call\_history}, która przechowuje dane o historiach połączeń pomiędzy użytkownikami. Dostępne statusy zaproszeń znajdują się w tabeli \texttt{invitation\_statuses}.
 
     \begin{figure}[H]
       \centering
@@ -119,4 +119,28 @@
     \end{figure}
 
     Na rysunku \ref{fig:rel} znajduje się rozwinięcie diagramu związków encji do modelu relacyjnego. Prezentuje on kolumny, które należą do poszczególnych tabel wraz z oznaczeniem kluczy głównych (żółty klucz) i obcych (zielona strzałka). Opcjonalność wartości w kolumnach jest oznaczona białą literą "N", a unikalność czerwoną literą "U".
+
+    \section{Schemat bazy danych}
+    \paragraph{} W rozdziale znajdują się diagramy UML wraz z ich opisami.
+
+    \subsection{Diagramy przypadków użycia}
+    W rozdziale zostały opisane diagramy przypadków użycia dla użytkownika zalogowanego i niezalogowanego.
+
+    \begin{figure}[H]
+      \centering
+        \includegraphics[width=1.0\linewidth]{assets/dpu1.png}
+        \caption[]{Diagram przypadków użycia dla użytkownika niezalogowanego}
+        \label{fig:dpu1}
+    \end{figure}
+
+    Zgodnie z rysunkiem \ref{fig:dpu1}, użytkownik niezalogowany może wykonać trzy operacje - logowanie, rejestrację oraz resetowanie hasła.
+
+    \begin{figure}[H]
+      \centering
+        \includegraphics[width=1.0\linewidth]{assets/dpu2.png}
+        \caption[]{Diagram przypadków użycia dla użytkownika zalogowanego}
+        \label{fig:dpu2}
+    \end{figure}
+
+    Rysunek \ref{fig:dpu2} przedstawia możliwe czynności, które może wykonać użytkownik zalogowany. Najważniejsze czynności to m.in. zarządzanie listą znajomych, zarządzanie ustawieniami konta oraz działania związane z inicjowaniem oraz prowadzeniem rozmowy.
 \end{document}
