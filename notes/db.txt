@@ -9,9 +9,22 @@ varchar : password
 varchar : email
 big int : created_at (unix timestamp)
 bool : activated
-varchar : activation_key/activation_token
 blob : profile_image
 varchar : description
+
+
+key_types:
+int : *id*
+varchar : name // account_activation
+               // password_reset
+
+
+keys:
+int : *id*
+int : _key_type_id_
+int : _user_id_
+varchar : value
+big int : expiration_date (unix timestamp) // cron job do usuwania przeterminowanych kluczy??
 
 
 sessions:
