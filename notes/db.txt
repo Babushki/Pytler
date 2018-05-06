@@ -26,11 +26,12 @@ int : _invitation_id_
 blob : ringtone
 
 invitation_statuses:
-int : *id* // pending,
-           // accepted,
-           // rejected_unseen (zaproszenie odrzucone, info o tym do ujrzenia przez zapraszającego),
-           // rejected (zaproszenie odrzucone, info o tym ujrzane przez zapraszającego),
-           // accepted_obsolete??
+int : *id*
+varchar : name // pending,
+               // accepted,
+               // rejected_unseen (zaproszenie odrzucone, info o tym do ujrzenia przez zapraszającego),
+               // rejected (zaproszenie odrzucone, info o tym ujrzane przez zapraszającego),
+               // accepted_obsolete??
 
 invitations:
 int : *id*
