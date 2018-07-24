@@ -114,6 +114,99 @@ class UserService:
         with PYTLER_DB as db:
             db.execute(query, (cherrypy.request.login,), ResultSet.NONE)
 
+#----
+@cherrypy.expose
+class ContactsService:
+
+    @cherrypy.tools.json_out()
+    def GET(self):
+        query1 = """SELECT u.login, profile_image, u.id, description, ringtone FROM contacts JOIN users u ON contacts.contact_id = u.id WHERE contacts.user_id = %s;"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            contacts = db.execute(query1, (user_id,), ResultSet.ALL)
+        result = []
+
+        for c in contacts:
+            result.append({'login': c[0], 'profile_image': c[1], 'id': c[2], 'description': c[3], 'ringtone': c[4]})
+
+        return result
+
+    def POST(self, contact_login):
+        pending_status_id = 1
+        query1 = """INSERT INTO invitations (inviting_user_id, invited_user_id, invitation_status_id, created_at, last_modified)
+                    VALUES (%s, %s, %s, extract(epoch from now()), extract(epoch from now()));"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            contact_id = db.execute(query2, (contact_login,), ResultSet.ONE)[0]
+            db.execute(query1, (user_id, contact_id, pending_status_id), ResultSet.NONE)
+
+    def DELETE(self, contact_login):
+        query1 = """DELETE FROM contacts WHERE user_id = %s AND contact_id = %s;"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            contact_id = db.execute(query2, (contact_login,), ResultSet.ONE)[0]
+            db.execute(query1, (user_id, contact_id), ResultSet.NONE)
+            db.execute(query1, (contact_id, user_id), ResultSet.NONE)
+
+#----
+@cherrypy.expose
+class InvitationsService:
+
+    @cherrypy.tools.json_out()
+    def GET(self):
+        query1 = """SELECT inviting_user_id, id FROM invitations WHERE invited_user_id = %s AND invitation_status_id = 1;"""
+        query2 = """SELECT invited_user_id, id FROM invitations WHERE inviting_user_id = %s AND invitation_status_id = 3;"""
+        query3 = """SELECT id FROM users WHERE login = %s;"""
+        query4 = """SELECT login FROM users WHERE id = %s;"""
+        query5 = """UPDATE invitations SET invitation_status_id = 4, last_modified = extract(epoch from now()) WHERE inviting_user_id = %s AND invitation_status_id = 3;"""
+
+        result = {'my_invitations': [], 'rejected_invitations': []}
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query3, (cherrypy.request.login,), ResultSet.ONE)[0]
+            my_invitations = db.execute(query1, (user_id,), ResultSet.ALL)
+            rejected_invitations = db.execute(query2, (user_id,), ResultSet.ALL)
+            db.execute(query5, (user_id,), ResultSet.NONE)
+
+            for i in my_invitations:
+                contact_login = db.execute(query4, (i[0],), ResultSet.ONE)[0]
+                result['my_invitations'].append({'invitation_id': i[1], 'login': contact_login})
+
+            for i in rejected_invitations:
+                contact_login = db.execute(query4, (i[0],), ResultSet.ONE)[0]
+                result['rejected_invitations'].append({'invitation_id': i[1], 'login': contact_login})
+
+        return result
+
+    def PUT(self, invitation_id, action):
+        #accept:
+        query1 = """UPDATE invitations SET invitation_status_id = 2, last_modified = extract(epoch from now()) WHERE id = %s AND invited_user_id = %s AND invitation_status_id = 1;"""
+        #reject:
+        query2 = """UPDATE invitations SET invitation_status_id = 3, last_modified = extract(epoch from now()) WHERE id = %s AND invited_user_id = %s AND invitation_status_id = 1;"""
+
+        query3 = """SELECT id FROM users WHERE login = %s;"""
+
+        query4 = """SELECT inviting_user_id FROM invitations WHERE id = %s;"""
+
+        query5 = """INSERT INTO contacts (user_id, contact_id, invitation_id) VALUES (%s, %s, %s);"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query3, (cherrypy.request.login,), ResultSet.ONE)[0]
+            contact_id = db.execute(query4, (invitation_id,), ResultSet.ONE)[0]
+            if action == 'reject':
+                db.execute(query2, (invitation_id, user_id), ResultSet.NONE)
+            elif action == 'accept':
+                db.execute(query1, (invitation_id, user_id), ResultSet.NONE)
+                db.execute(query5, (user_id, contact_id, invitation_id), ResultSet.NONE)
+                db.execute(query5, (contact_id, user_id, invitation_id), ResultSet.NONE)
+
+
 
 if __name__ == '__main__':
 
@@ -130,6 +223,10 @@ if __name__ == '__main__':
     cherrypy.config.update(config)
     cherrypy.tree.mount(AuthService(), '/api/auth', without_authentication)
     cherrypy.tree.mount(UserService(), '/api/user', with_authentication)
+    cherrypy.tree.mount(ContactsService(), '/api/contacts', with_authentication)
+    cherrypy.tree.mount(InvitationsService(), '/api/invitations', with_authentication)
+
+
 
     cherrypy.engine.start()
     cherrypy.engine.block()
