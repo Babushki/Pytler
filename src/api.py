@@ -205,6 +205,89 @@ class InvitationsService:
                 db.execute(query1, (invitation_id, user_id), ResultSet.NONE)
                 db.execute(query5, (user_id, contact_id, invitation_id), ResultSet.NONE)
                 db.execute(query5, (contact_id, user_id, invitation_id), ResultSet.NONE)
+#----
+
+@cherrypy.expose
+class SessionsService:
+
+    @cherrypy.tools.json_out()
+    def GET(self, user_id = None):
+        query1 = """SELECT id FROM sessions WHERE expiration_date > extract(epoch from now()) AND user_id = %s"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            if user_id is None:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            status = db.execute(query1, (user_id,), ResultSet.ONE)
+
+        if status:
+            return {'status': 'active'}
+        else:
+            return {'status': 'inactive'}
+
+    def POST(self):
+        query1 = """INSERT INTO sessions (user_id, created_at, expiration_date)
+                    VALUES (%s, extract(epoch from now()), extract(epoch from now() + interval '1 minute'))"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            db.execute(query1, (user_id,), ResultSet.NONE)
+
+    def PUT(self, status):
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+        if status == 'extend':
+            query1 = """UPDATE sessions SET expiration_date = extract(epoch from now() + interval '1 minute') WHERE user_id = %s AND expiration_date > extract(epoch from now())"""
+            with PYTLER_DB as db:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+                db.execute(query1, (user_id,), ResultSet.NONE)
+        elif status == 'end':
+            query1 = """UPDATE sessions SET expiration_date = extract(epoch from now()) WHERE user_id = %s AND expiration_date > extract(epoch from now())"""
+            with PYTLER_DB as db:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+                db.execute(query1, (user_id,), ResultSet.NONE)
+
+#----
+
+@cherrypy.expose
+class CallSessionsService:
+
+    @cherrypy.tools.json_out()
+    def GET(self, user_id = None):
+        query1 = """SELECT id, conversator_id FROM call_sessions WHERE expiration_date > extract(epoch from now()) AND user_id = %s"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            if user_id is None:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            status = db.execute(query1, (user_id,), ResultSet.ONE)
+
+        if status:
+            return {'status': 'active', 'conversator_id': status[1]}
+        else:
+            return {'status': 'inactive'}
+
+    def POST(self, conversator_id):
+        query1 = """INSERT INTO call_sessions (user_id, conversator_id, created_at, expiration_date)
+                    VALUES (%s, %s, extract(epoch from now()), extract(epoch from now() + interval '15 seconds'))"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            db.execute(query1, (user_id, conversator_id), ResultSet.NONE)
+
+    def PUT(self, conversator_id, status):
+        if status == 'extend':
+            query1 = """UPDATE call_sessions SET expiration_date = extract(epoch from now() + interval '10 seconds') WHERE user_id = %s AND expiration_date > extract(epoch from now()) AND conversator_id = %s"""
+            query2 = """SELECT id FROM users WHERE login = %s;"""
+            with PYTLER_DB as db:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+                db.execute(query1, (user_id, conversator_id), ResultSet.NONE)
+        elif status == 'end':
+            query1 = """UPDATE call_sessions SET expiration_date = extract(epoch from now()) WHERE user_id = %s AND expiration_date > extract(epoch from now()) AND conversator_id = %s"""
+            with PYTLER_DB as db:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+                db.execute(query1, (user_id, conversator_id), ResultSet.NONE)
 
 
 
@@ -225,6 +308,8 @@ if __name__ == '__main__':
     cherrypy.tree.mount(UserService(), '/api/user', with_authentication)
     cherrypy.tree.mount(ContactsService(), '/api/contacts', with_authentication)
     cherrypy.tree.mount(InvitationsService(), '/api/invitations', with_authentication)
+    cherrypy.tree.mount(SessionsService(), '/api/sessions', with_authentication)
+
 
 
 
