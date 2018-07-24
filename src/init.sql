@@ -79,4 +79,7 @@ CREATE TABLE pending_calls (
     address_port int NOT NULL,
     encrypted boolean NOT NULL DEFAULT FALSE,
     public_key varchar(255)
-)
+);
+
+INSERT INTO invitation_statuses (name) VALUES ('pending'), ('accepted'), ('rejected_unseen'), ('rejected');
+INSERT INTO key_types (name) VALUES ('activation');
