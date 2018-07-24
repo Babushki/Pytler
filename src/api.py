@@ -284,10 +284,49 @@ class CallSessionsService:
                 user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
                 db.execute(query1, (user_id, conversator_id), ResultSet.NONE)
         elif status == 'end':
-            query1 = """UPDATE call_sessions SET expiration_date = extract(epoch from now()) WHERE user_id = %s AND expiration_date > extract(epoch from now()) AND conversator_id = %s"""
+            query1 = """UPDATE call_sessions SET expiration_date = extract(epoch from now()) WHERE user_id = %s AND expiration_date > extract(epoch from now()) AND conversator_id = %s RETURNING created_at, expiration_date"""
+            query3 = """INSERT INTO call_history (caller_id, receiver_id, datetime, duration) VALUES (%s, %s, %s, %s)"""
+
             with PYTLER_DB as db:
                 user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
-                db.execute(query1, (user_id, conversator_id), ResultSet.NONE)
+                info = db.execute(query1, (user_id, conversator_id), ResultSet.ONE)
+                db.execute(query3, (user_id, conversator_id, info[0], info[1]-info[0]), ResultSet.NONE)
+
+#----
+@cherrypy.expose
+class PendingCallsService:
+
+    @cherrypy.tools.json_out()
+    def GET(self):
+        query1 = """SELECT calling_user_id, address_host, address_port, encrypted, public_key FROM pending_calls WHERE called_user_id = %s"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+        query3 = """SELECT login FROM users WHERE id = %s;"""
+
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            info = db.execute(query1, (user_id, ), ResultSet.ONE)
+            if info:
+                user_login = db.execute(query3, (info[0],), ResultSet.ONE)[0]
+                result = {'login': user_login, 'host': info[1], 'id': info[0], 'port': info[2], 'encrypted': info[3]}
+                if info[3]:
+                    result['public_key'] = info[4]
+
+    @cherrypy.tools.json_in()
+    def POST(self):
+        query1 = """INSERT INTO pending_calls (calling_user_id, called_user_id, address_host, address_port, encrypted, public_key)
+                    VALUES (%s, %s, %s, %s, %s, %s)"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+        request = cherrypy.request.json
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            db.execute(query1, (user_id, request['user_id'], request['host'], request['port'], request['encrypted'], request.get('public_key', None)), ResultSet.NONE)
+
+    def DELETE(self):
+        query1 = """DELETE FROM pending_calls WHERE calling_user_id = %s"""
+        query2 = """SELECT id FROM users WHERE login = %s;"""
+        with PYTLER_DB as db:
+            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+            db.execute(query1, (user_id,), ResultSet.NONE)
 
 
 
@@ -309,6 +348,10 @@ if __name__ == '__main__':
     cherrypy.tree.mount(ContactsService(), '/api/contacts', with_authentication)
     cherrypy.tree.mount(InvitationsService(), '/api/invitations', with_authentication)
     cherrypy.tree.mount(SessionsService(), '/api/sessions', with_authentication)
+    cherrypy.tree.mount(CallSessionsService(), '/api/callsessions', with_authentication)
+    cherrypy.tree.mount(PendingCallsService(), '/api/pendingcall', with_authentication)
+
+
 
 
 
