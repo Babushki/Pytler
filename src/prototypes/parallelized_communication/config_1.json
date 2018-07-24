@@ -1,0 +1,22 @@
+{
+    "me": {
+        "out_socket": {
+            "host": "127.0.0.1",
+            "port": 8888
+        },
+        "in_socket": {
+            "host": "127.0.0.1",
+            "port": 8889
+        }
+    },
+    "caller": {
+        "out_socket": {
+            "host": "127.0.0.1",
+            "port": 8890
+        },
+        "in_socket": {
+            "host": "127.0.0.1",
+            "port": 8891
+        }
+    }
+}
