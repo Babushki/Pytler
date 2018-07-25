@@ -227,7 +227,7 @@ class SessionsService:
 
     def POST(self):
         query1 = """INSERT INTO sessions (user_id, created_at, expiration_date)
-                    VALUES (%s, extract(epoch from now()), extract(epoch from now() + interval '1 minute'))"""
+                    VALUES (%s, extract(epoch from now()), extract(epoch from now() + interval '20 seconds'))"""
         query2 = """SELECT id FROM users WHERE login = %s;"""
 
         with PYTLER_DB as db:
@@ -237,7 +237,7 @@ class SessionsService:
     def PUT(self, status):
         query2 = """SELECT id FROM users WHERE login = %s;"""
         if status == 'extend':
-            query1 = """UPDATE sessions SET expiration_date = extract(epoch from now() + interval '1 minute') WHERE user_id = %s AND expiration_date > extract(epoch from now())"""
+            query1 = """UPDATE sessions SET expiration_date = extract(epoch from now() + interval '20 seconds') WHERE user_id = %s AND expiration_date > extract(epoch from now())"""
             with PYTLER_DB as db:
                 user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
                 db.execute(query1, (user_id,), ResultSet.NONE)

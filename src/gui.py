@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import requests
 import hashlib
+import time
 
 ADDRESS = 'http://127.0.0.1:8080'
 
@@ -16,6 +17,19 @@ class GUI:
         self.login = None
         self.password = None
         self.contacts = None
+        self.on = PhotoImage(file='on.png')
+        self.off = PhotoImage(file='off.png')
+
+        self.root.protocol('WM_DELETE_WINDOW', func=self.close_window)
+
+    def close_window(self):
+        r = requests.get(ADDRESS + '/api/sessions', auth = (self.login,self.password))
+        if r.ok:
+            my_status = r.json()['status']
+            if my_status == 'active':
+                r = requests.put(ADDRESS + '/api/sessions', params={'status': 'end'}, auth = (self.login,self.password))
+        self.root.destroy()
+
     def choose_login_register(self):
         self.reset_frame()
         login_button = Button(self.main_frame, text = 'Zaloguj', command = self.login_frame)
@@ -141,6 +155,21 @@ class GUI:
         else:
             messagebox.showinfo("Uwaga", "Użytkownik o podanym loginie nie istnieje")
 
+    def update_my_status(self):
+        r = requests.get(ADDRESS + '/api/sessions', auth = (self.login,self.password))
+        if r.ok:
+            my_status = r.json()['status']
+            if my_status == 'active':
+                r = requests.put(ADDRESS + '/api/sessions', params={'status': 'extend'}, auth = (self.login,self.password))
+                if not r.ok:
+                    messagebox.showinfo("Uwaga", "Błąd podczas odświeżania statusu")
+            else:
+                r = requests.post(ADDRESS + '/api/sessions', auth = (self.login,self.password))
+                if not r.ok:
+                    messagebox.showinfo("Uwaga", "Błąd podczas odświeżania statusu")
+        else:
+            messagebox.showinfo("Uwaga", "Błąd podczas ładowania statusów użytkowników")
+        self.main_frame.after(10000, func = self.update_my_status)
 
     def main_view(self):
         self.reset_frame()
@@ -150,6 +179,7 @@ class GUI:
         contacts_frame.grid(row=1, column=0)
         add_contact_button = Button(self.main_frame, text='Dodaj kontakt', command = self.popup_add_contact)
         add_contact_button.grid(row=2, column=0)
+        self.update_my_status()
         r = requests.get(ADDRESS + '/api/contacts', auth = (self.login,self.password))
         if r.ok:
             self.contacts = r.json()
@@ -158,10 +188,12 @@ class GUI:
 
         for i, contact in enumerate(self.contacts):
             contact_button = Button(contacts_frame, text=contact['login'])
-            contact_button.grid(row = i, column = 0)
+            contact_button.grid(row = i, column = 1)
             delete_button = Button(contacts_frame, text = 'x', fg='red', command=lambda: self.delete_contact(contact['login']))
-            delete_button.grid(row = i, column = 1)
-
+            delete_button.grid(row = i, column = 2)
+            status_label = Label(contacts_frame, image=self.off)
+            status_label.grid(row=i, column=0)
+            self.update_contact_status(contact['id'], status_label)
         r = requests.get(ADDRESS + '/api/invitations',  auth = (self.login,self.password))
         if r.ok:
             invitations = r.json()
@@ -175,6 +207,19 @@ class GUI:
         for i in invitations['my_invitations']:
             self.invitation_popup(i['login'], i['invitation_id'])
 
+    def update_contact_status(self, contact_id, status_label):
+        r = requests.get(ADDRESS + '/api/sessions', params={'user_id': contact_id}, auth = (self.login,self.password))
+        if r.ok:
+            status = r.json()['status']
+            if status == 'active':
+                status_image = self.on
+            else:
+                status_image = self.off
+        else:
+            messagebox.showinfo("Uwaga", "Błąd podczas ładowania statusów użytkowników")
+
+        status_label.configure(image = status_image)
+        status_label.after(5000, func= lambda: self.update_contact_status(contact_id, status_label))
 
     def invitation_popup(self, login, invitation_id):
         popup = Toplevel()
