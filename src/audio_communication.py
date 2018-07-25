@@ -1,32 +1,78 @@
 import json
 import socket
 import sys
-import time
+import collections
 
 from multiprocessing.dummy import Value, Pool as ThreadPool
+
+import pyaes
 
 from audio_management import AudioRecorder, AudioPlayer
 from codecs_management import Coder, Decoder
 
 
 CHUNK_SIZE = 4096
+SHARED_SECRET = '6aa5b26a760d53a8ae1567c3508885f8'.encode()
 
 
-def record_and_send(out_socket, receiver, audio_recorder, connected):
-    out_socket.settimeout(1.0)
-    while connected.value:
-        recording = audio_recorder.record_chunk()
-        coded_recording = Coder().code(recording)
-        out_socket.sendto(coded_recording, receiver)
+Audio = collections.namedtuple('Audio', 'recorder, player, coder, decoder')
+Audio.__new__.__defaults__ = (Coder(), Decoder())
+Sockets = collections.namedtuple('Sockets', 'in_, out, timeout')
+Sockets.__new__.__defaults__ = (5.0,)
+Addresses = collections.namedtuple('Addresses', 'in_, out')
 
 
-def receive_and_play(in_socket, sender, audio_player, connected):
-    in_socket.settimeout(1.0)
-    while connected.value:
-        received, address = in_socket.recvfrom(CHUNK_SIZE)
-        if address == sender and received:
-            recording = Decoder().decode(received)
-            audio_player.play_chunk(recording)
+class AudioCommunication:
+    def __init__(self, sockets, addresses, audio, shared_secret=None):
+        self.sockets = sockets
+        self.addresses = addresses
+        self.audio = audio
+        self.shared_secret = shared_secret
+        self._continue = None
+        self.pool = ThreadPool(2)
+
+    def _get_excepted_received_size(self):
+        # TODO
+        # return self.audio.recorder.chunk_ / (self.audio.coder.width * 2)
+        # return self.audio.recorder.chunk_
+        return CHUNK_SIZE
+
+    def _encrypt(self, data):
+        return pyaes.AESModeOfOperationCTR(self.shared_secret).encrypt(data)
+
+    def _decrypt(self, data):
+        return pyaes.AESModeOfOperationCTR(self.shared_secret).decrypt(data)
+
+    def _record_and_send(self):
+        self.sockets.out.settimeout(self.sockets.timeout)
+        while self._continue.value:
+            recording = self.audio.recorder.record_chunk()
+            recording = self.audio.coder.code(recording)
+            if self.shared_secret:
+                recording = self._encrypt(recording)
+            self.sockets.out.sendto(recording, self.addresses.in_)
+
+    def _receive_and_play(self):
+        self.sockets.in_.settimeout(self.sockets.timeout)
+        while self._continue.value:
+            expected_received_size = self._get_excepted_received_size()
+            received, address = self.sockets.in_.recvfrom(
+                expected_received_size)
+            if address == self.addresses.out and received:
+                if self.shared_secret:
+                    received = self._decrypt(received)
+                recording = self.audio.decoder.decode(received)
+                self.audio.player.play_chunk(recording)
+
+    def start(self):
+        self._continue = Value('b', True)
+        self.pool.apply_async(self._record_and_send, [])
+        self.pool.apply_async(self._receive_and_play, [])
+        self.pool.close()
+
+    def stop(self):
+        self._continue.value = False
+        self.pool.join()
 
 
 def tuple_address(config_address):
@@ -45,27 +91,18 @@ def main():
         out_socket.bind(tuple_address(config['me']['out_socket']))
         in_socket.bind(tuple_address(config['me']['in_socket']))
 
-        connected = Value('b', True)
-        pool = ThreadPool(2)
-        pool.apply_async(record_and_send, [
-            out_socket,
-            tuple_address(config['caller']['in_socket']),
-            audio_recorder,
-            connected,
-        ])
-        pool.apply_async(receive_and_play, [
-            in_socket,
-            tuple_address(config['caller']['out_socket']),
-            audio_player,
-            connected,
-        ])
-        pool.close()
+        audio_communication = AudioCommunication(
+            Sockets(in_socket, out_socket),
+            Addresses(tuple_address(config['caller']['in_socket']),
+                      tuple_address(config['caller']['out_socket'])),
+            Audio(audio_recorder, audio_player),
+            # SHARED_SECRET,
+        )
 
+        audio_communication.start()
         while bool(input('Press enter to stop')):
             pass
-
-        connected.value = False
-        pool.join()
+        audio_communication.stop()
 
 
 if __name__ == '__main__':
