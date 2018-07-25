@@ -16,6 +16,8 @@ class GUI:
         self.auth_token = None
         self.login = None
         self.password = None
+        self.email = None
+        self.description = None
         self.contacts = None
         self.on = PhotoImage(file='on.png')
         self.off = PhotoImage(file='off.png')
@@ -171,14 +173,181 @@ class GUI:
             messagebox.showinfo("Uwaga", "Błąd podczas ładowania statusów użytkowników")
         self.main_frame.after(10000, func = self.update_my_status)
 
+    def reset_frame_main_view(self, frame):
+        for widget in frame.winfo_children():
+            widget.destroy()
+
+    def show_contact_info(self, contact_info, frame):
+        self.reset_frame_main_view(frame)
+        contact_image = Frame(frame, width=200, height=200, borderwidth=2, relief='groove')
+        contact_image.grid(column=0, row=0, padx=20, pady=20)
+        contact_image.grid_propagate(False)
+        contact_image.pack_propagate(False)
+
+        call_button = Button(frame, text='Zadzwoń')
+        call_button.grid(column=1, row=0)
+        if contact_info['description']:
+            contact_description = Label(frame, text= 'Opis: ' + contact_info['description'])
+        else:
+            contact_description = Label(frame, text= 'Opis: brak')
+        contact_description.grid(columnspan=2, row=1)
+
+    def popup_change_password(self):
+        popup = Toplevel()
+        popup.title('Zmień hasło')
+        contact_label = Label(popup, text = 'Wpisz nowe hasło: ', )
+        contact_label.grid(column=0, row=0)
+        entry = Entry(popup,show='*')
+        entry.grid(column=1, row=0)
+
+        buttod_add_contact = Button(popup, text = 'Zmień hasło', command = lambda: self.change_password(popup, entry))
+        buttod_add_contact.grid(columnspan=2, row=1)
+
+    def change_password(self, popup, entry):
+        password = entry.get()
+        if not password:
+            messagebox.showinfo("Uwaga", "Wypełnij pole")
+            return
+
+        if len(password) < 8:
+            messagebox.showinfo("Uwaga", "Hasło powinno mieć co najmniej 8 znaków")
+            return
+
+        upper = False
+        lower = False
+        digit = False
+
+        for letter in password:
+            if letter.isupper():
+                upper = True
+            elif letter.islower():
+                lower = True
+            elif letter.isdigit():
+                digit = True
+
+            if upper and lower and digit:
+                break
+
+        if not upper or not lower:
+            messagebox.showinfo("Uwaga", "Hasło powinno mieć co najmniej jedną wielką literę oraz jedną małą literę")
+            return
+        if not digit:
+            messagebox.showinfo("Uwaga", "Hasło powinno mieć co najmniej jedną cyfrę")
+            return
+        encrypted = self.encode_password(password)
+        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':encrypted, 'description': self.description}, auth = (self.login,self.password))
+
+        if r.ok:
+            messagebox.showinfo("Ok", "Poprawnie zmieniono hasło")
+            self.password = encrypted
+            popup.destroy()
+        else:
+            messagebox.showinfo("Uwaga", "Nie udało się zmienić hasła")
+            popup.destroy()
+
+    def popup_change_email(self, frame):
+        popup = Toplevel()
+        popup.title('Zmień email')
+        contact_label = Label(popup, text = 'Wpisz nowy email: ', )
+        contact_label.grid(column=0, row=0)
+        entry = Entry(popup)
+        entry.grid(column=1, row=0)
+
+        buttod_add_contact = Button(popup, text = 'Zmień email', command = lambda: self.change_email(popup, entry, frame))
+        buttod_add_contact.grid(columnspan=2, row=1)
+
+    def change_email(self, popup, entry, frame):
+        email = entry.get()
+        if not email:
+            messagebox.showinfo("Uwaga", "Wypełnij pole")
+            return
+
+        r = requests.put(ADDRESS + '/api/user', json={'email': email, 'password':self.password, 'description': self.description}, auth = (self.login,self.password))
+
+        if r.ok:
+            messagebox.showinfo("Ok", "Poprawnie zmieniono email")
+            self.email = email
+            popup.destroy()
+            self.show_options(frame)
+        else:
+            messagebox.showinfo("Uwaga", "Nie udało się zmienić emaila")
+            popup.destroy()
+
+    def popup_change_desc(self, frame):
+        popup = Toplevel()
+        popup.title('Zmień opis')
+        contact_label = Label(popup, text = 'Wpisz nowy opis: ', )
+        contact_label.grid(column=0, row=0)
+        entry = Entry(popup)
+        entry.grid(column=1, row=0)
+
+        buttod_add_contact = Button(popup, text = 'Zmień opis', command = lambda: self.change_desc(popup, entry, frame))
+        buttod_add_contact.grid(columnspan=2, row=1)
+
+    def change_desc(self, popup, entry, frame):
+        desc = entry.get()
+        if not desc:
+            messagebox.showinfo("Uwaga", "Wypełnij pole")
+            return
+
+        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':self.password, 'description': desc}, auth = (self.login,self.password))
+
+        if r.ok:
+            messagebox.showinfo("Ok", "Poprawnie zmieniono opis")
+            self.description = desc
+            popup.destroy()
+            self.show_options(frame)
+        else:
+            messagebox.showinfo("Uwaga", "Nie udało się zmienić opis")
+            popup.destroy()
+
+    def show_options(self, frame):
+        self.reset_frame_main_view(frame)
+        r = requests.get(ADDRESS + '/api/user', auth = (self.login,self.password))
+        if r.ok:
+            info = r.json()
+            self.email = info['email']
+            label_email = Label(frame, text='Twój email: ' + info['email'])
+            if info['description']:
+                label_description = Label(frame, text='Twój opis: ' + info['description'])
+                self.description = info['description']
+            else:
+                label_description = Label(frame, text='Twój opis: brak')
+            button_pass = Button(frame, text='Zmień hasło', command=self.popup_change_password)
+            button_email = Button(frame, text='Zmień email', command=lambda: self.popup_change_email(frame))
+            button_description = Button(frame, text='Zmień opis', command=lambda: self.popup_change_desc(frame))
+
+            label_email.grid(column=1, row=0, pady=(50, 10), padx=120)
+            label_description.grid(column=1, row=1, pady=10, padx=120)
+            button_pass.grid(column=1, row=2, pady=10, padx=120)
+            button_email.grid(column=1, row=3, pady=10, padx=120)
+            button_description.grid(column=1, row=4, pady=10, padx=120)
+
+        else:
+            messagebox.showinfo("Uwaga", "Błąd podczas ładowania opcji")
+
+
     def main_view(self):
         self.reset_frame()
-        contacts_label = Label(self.main_frame, text='Kontakty')
-        contacts_label.grid(row=0, column=0)
-        contacts_frame = Frame(self.main_frame)
-        contacts_frame.grid(row=1, column=0)
-        add_contact_button = Button(self.main_frame, text='Dodaj kontakt', command = self.popup_add_contact)
-        add_contact_button.grid(row=2, column=0)
+        main_field = Frame(self.main_frame, width=400, height=400, borderwidth=2, relief='groove')
+        main_field.grid(column=1, row=1, rowspan=10, pady=20, padx=(0,20))
+        main_field.grid_propagate(False)
+        main_field.pack_propagate(False)
+        options_bar = Frame(self.main_frame)
+        options_bar.grid(row=0, column=0, columnspan=2)
+        options_button = Button(options_bar, text='Opcje', command = lambda: self.show_options(main_field))
+        options_button.pack(side=RIGHT)
+        w_contacts = Frame(self.main_frame, borderwidth=2, relief='groove')
+        w_contacts.grid(row=1, column=0, padx=20, pady=20)
+        contacts_label = Label(w_contacts, text='Kontakty', borderwidth=2, relief='groove')
+        contacts_label.grid(row=0, column=0, padx=20, pady=10)
+        contacts_frame = Frame(w_contacts)
+        contacts_frame.grid(row=1, column=0, pady=(0,10))
+        add_contact_button = Button(w_contacts, text='Dodaj kontakt', command = self.popup_add_contact)
+        add_contact_button.grid(row=2, column=0, pady=(0,10))
+
+
+
         self.update_my_status()
         r = requests.get(ADDRESS + '/api/contacts', auth = (self.login,self.password))
         if r.ok:
@@ -187,10 +356,10 @@ class GUI:
             self.contacts = []
 
         for i, contact in enumerate(self.contacts):
-            contact_button = Button(contacts_frame, text=contact['login'])
-            contact_button.grid(row = i, column = 1)
+            contact_button = Button(contacts_frame, text=contact['login'], command = lambda: self.show_contact_info(contact, main_field))
+            contact_button.grid(row = i, column = 1, pady=10, padx=5)
             delete_button = Button(contacts_frame, text = 'x', fg='red', command=lambda: self.delete_contact(contact['login']))
-            delete_button.grid(row = i, column = 2)
+            delete_button.grid(row = i, column = 2, padx=(0,10))
             status_label = Label(contacts_frame, image=self.off)
             status_label.grid(row=i, column=0)
             self.update_contact_status(contact['id'], status_label)
