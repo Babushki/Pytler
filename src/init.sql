@@ -10,7 +10,7 @@ CREATE TABLE users (
     email varchar(254) UNIQUE NOT NULL,
     created_at bigint NOT NULL,
     activated boolean DEFAULT FALSE NOT NULL,
-    profile_image bytea,
+    profile_image text,
     description varchar(100)
 );
 

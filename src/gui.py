@@ -3,6 +3,8 @@ from tkinter import messagebox
 import requests
 import hashlib
 import time
+from base64 import b64decode, b64encode
+from tkinter.filedialog import askopenfilename
 
 ADDRESS = 'http://127.0.0.1:8080'
 
@@ -21,7 +23,10 @@ class GUI:
         self.contacts = None
         self.on = PhotoImage(file='on.png')
         self.off = PhotoImage(file='off.png')
-
+        self.image = None
+        self.contact_image = None
+        self.profile_image = None
+        self.image_raw = None
         self.root.protocol('WM_DELETE_WINDOW', func=self.close_window)
 
     def close_window(self):
@@ -179,10 +184,19 @@ class GUI:
 
     def show_contact_info(self, contact_info, frame):
         self.reset_frame_main_view(frame)
-        contact_image = Frame(frame, width=200, height=200, borderwidth=2, relief='groove')
-        contact_image.grid(column=0, row=0, padx=20, pady=20)
-        contact_image.grid_propagate(False)
-        contact_image.pack_propagate(False)
+
+        if contact_info['profile_image']:
+            self.contact_image = PhotoImage(format='png', data=contact_info['profile_image'])
+
+            contact_image = Label(frame, image=self.contact_image, width=200, height=200, borderwidth=2, relief='groove')
+            contact_image.grid(column=0, row=0, padx=20, pady=20)
+            contact_image.grid_propagate(False)
+            contact_image.pack_propagate(False)
+        else:
+            contact_image = Frame(frame, width=200, height=200, borderwidth=2, relief='groove')
+            contact_image.grid(column=0, row=0, padx=20, pady=20)
+            contact_image.grid_propagate(False)
+            contact_image.pack_propagate(False)
 
         call_button = Button(frame, text='Zadzwoń')
         call_button.grid(column=1, row=0)
@@ -235,7 +249,7 @@ class GUI:
             messagebox.showinfo("Uwaga", "Hasło powinno mieć co najmniej jedną cyfrę")
             return
         encrypted = self.encode_password(password)
-        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':encrypted, 'description': self.description}, auth = (self.login,self.password))
+        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':encrypted, 'description': self.description, 'image': self.image_raw}, auth = (self.login,self.password))
 
         if r.ok:
             messagebox.showinfo("Ok", "Poprawnie zmieniono hasło")
@@ -262,7 +276,7 @@ class GUI:
             messagebox.showinfo("Uwaga", "Wypełnij pole")
             return
 
-        r = requests.put(ADDRESS + '/api/user', json={'email': email, 'password':self.password, 'description': self.description}, auth = (self.login,self.password))
+        r = requests.put(ADDRESS + '/api/user', json={'email': email, 'password':self.password, 'description': self.description, 'image': self.image_raw}, auth = (self.login,self.password))
 
         if r.ok:
             messagebox.showinfo("Ok", "Poprawnie zmieniono email")
@@ -290,7 +304,7 @@ class GUI:
             messagebox.showinfo("Uwaga", "Wypełnij pole")
             return
 
-        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':self.password, 'description': desc}, auth = (self.login,self.password))
+        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':self.password, 'description': desc, 'image': self.image_raw}, auth = (self.login,self.password))
 
         if r.ok:
             messagebox.showinfo("Ok", "Poprawnie zmieniono opis")
@@ -300,6 +314,27 @@ class GUI:
         else:
             messagebox.showinfo("Uwaga", "Nie udało się zmienić opis")
             popup.destroy()
+
+    def popup_change_img(self, frame):
+        name = askopenfilename(initialdir="C:/",
+                           filetypes =(("PNG", "*.png"),("All Files","*.*")),
+                           title = "Choose a file.")
+        if not name:
+            return
+
+        with open(name, 'rb') as img:
+            encoded_img = str(b64encode(img.read()))[2:-1]
+        r = requests.put(ADDRESS + '/api/user', json={'email': self.email, 'password':self.password, 'description': self.description, 'image': encoded_img}, auth = (self.login,self.password))
+        if r.ok:
+            messagebox.showinfo("Ok", "Poprawnie zmieniono obraz")
+            self.image_raw = encoded_img
+            self.show_options(frame)
+        else:
+            messagebox.showinfo("Uwaga", "Nie udało się zmienić opis")
+
+
+
+
 
     def show_options(self, frame):
         self.reset_frame_main_view(frame)
@@ -313,15 +348,32 @@ class GUI:
                 self.description = info['description']
             else:
                 label_description = Label(frame, text='Twój opis: brak')
+
+            if info['profile_image']:
+                self.image_raw = info['profile_image']
+                self.profile_image = PhotoImage(format='png', data=info['profile_image'])
+                contact_image = Label(frame, image=self.profile_image, width=200, height=200, borderwidth=2, relief='groove')
+                contact_image.grid(column=1, row=0, padx=20, pady=5)
+                contact_image.grid_propagate(False)
+                contact_image.pack_propagate(False)
+            else:
+                contact_image = Frame(frame, width=200, height=200, borderwidth=2, relief='groove')
+                contact_image.grid(column=1, row=0, padx=20, pady=5)
+                contact_image.grid_propagate(False)
+                contact_image.pack_propagate(False)
+
+            button_image = Button(frame, text='Zmień obraz', command=lambda: self.popup_change_img(frame))
             button_pass = Button(frame, text='Zmień hasło', command=self.popup_change_password)
             button_email = Button(frame, text='Zmień email', command=lambda: self.popup_change_email(frame))
             button_description = Button(frame, text='Zmień opis', command=lambda: self.popup_change_desc(frame))
 
-            label_email.grid(column=1, row=0, pady=(50, 10), padx=120)
-            label_description.grid(column=1, row=1, pady=10, padx=120)
-            button_pass.grid(column=1, row=2, pady=10, padx=120)
-            button_email.grid(column=1, row=3, pady=10, padx=120)
-            button_description.grid(column=1, row=4, pady=10, padx=120)
+            label_email.grid(column=1, row=1, pady=(50, 10), padx=60)
+            label_description.grid(column=1, row=2, pady=10, padx=60)
+            button_pass.grid(column=1, row=3, pady=10, padx=60)
+            button_email.grid(column=2, row=1, pady=10)
+            button_description.grid(column=2, row=2, pady=10)
+            button_image.grid(column=2, row=0)
+
 
         else:
             messagebox.showinfo("Uwaga", "Błąd podczas ładowania opcji")
@@ -366,10 +418,7 @@ class GUI:
             status_label.grid(row=i, column=0)
             self.update_contact_status(contact['id'], status_label)
 
-
         self.check_invitations(main_field)
-
-
 
     def check_invitations(self, field):
         r = requests.get(ADDRESS + '/api/invitations',  auth = (self.login,self.password))

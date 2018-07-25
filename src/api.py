@@ -104,10 +104,10 @@ class UserService:
 
     @cherrypy.tools.json_in()
     def PUT(self):
-        query = """UPDATE users SET email = %s, password = %s, description = %s WHERE login = %s;"""
+        query = """UPDATE users SET email = %s, password = %s, description = %s, profile_image = %s WHERE login = %s;"""
         request = cherrypy.request.json
         with PYTLER_DB as db:
-            db.execute(query, (request['email'], request['password'], request['description'], cherrypy.request.login), ResultSet.NONE)
+            db.execute(query, (request['email'], request['password'], request['description'], request['image'], cherrypy.request.login), ResultSet.NONE)
 
     def DELETE(self):
         query = """DELETE FROM users WHERE login = %s;"""
