@@ -92,8 +92,8 @@
     \item Zalogowany użytkownik może usunąć znajomego z listy znajomych.
     \item Zalogowany użytkownik może zadzwonić do użytkownika ze swojej listy znajomych.
     \item Użytkownik, do którego jest wykonywane połączenie może je odrzucić lub odebrać.
-    \item Podczas rozmowy możliwe jest wyciszenie mikrofonu i dźwięku za pośrednictwem interfejsu aplikacji.
-    \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
+    % \item Podczas rozmowy możliwe jest wyciszenie mikrofonu i dźwięku za pośrednictwem interfejsu aplikacji.
+    % \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
     \item Zalogowany użytkownik ma możliwość ustawienia opisu i zdjęcia profilowego, które będą wyświetlane jego znajomym.
     \item Użytkownik inicjujący rozmowę może wybrać między połączeniem nieszyfrowanym a szyfrowanym.
     \item Zalogowany użytkownik może zmienić swoje hasło oraz adres e-mail.
@@ -117,12 +117,13 @@
     \item W trakcie rozmowy między użytkownikami wykorzystywany jest protokół UDP.
     \item Do kompresji dźwięku podczas rozmowy między użytkownikami wykorzystywany jest kodek ADPCM.
     \item Logowanie wymaga podania przez użytkownika loginu (nazwa użytkownika) oraz hasła.
-    \item Zdjęcia profilowe oraz wybrane przez użytkownika dzwonki przechowywane są na serwerze.
+    % \item Zdjęcia profilowe oraz wybrane przez użytkownika dzwonki przechowywane są na serwerze.
+    \item Zdjęcia profilowe przechowywane są na serwerze.
     \item Autoryzowanie użytkownika odbywa się za pomocą metody Basic Auth.
     \item Hasło użytkownika musi mieć co najmniej 8 znaków, w tym co najmniej jedną cyfrę, jedną wielką literę i jedną małą literę
   \end{enumerate}
   \section{Narzędzia}
-  \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 16.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python 3.6 dla aplikacji serwerowej oraz Jython dla aplikacji klienckiej.
+  \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 18.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python 3.6, zarówno dla aplikacji serwerowej, jak i aplikacji klienckiej. Główne moduły tego języka, zastosowane w systemie, to CherryPy (do implementacji REST API, na którym opiera się sposób działania aplikacji serwerowej), PyAudio (do implementacji nagrywania oraz odtwarzania dźwięku w aplikacji klienckiej) oraz Tkinter (do implementacji GUI w aplikacji klienckiej).
   Pracę zespołową wspierają:
   \begin{enumerate}
     \item System kontroli wersji Git, hostowany w serwisie GitHub.
