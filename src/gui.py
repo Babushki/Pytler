@@ -337,6 +337,8 @@ class GUI:
         options_bar.grid(row=0, column=0, columnspan=2)
         options_button = Button(options_bar, text='Opcje', command = lambda: self.show_options(main_field))
         options_button.pack(side=RIGHT)
+        refresh_button = Button(options_bar, text='Odśwież', command = self.main_view)
+        refresh_button.pack(side=LEFT)
         w_contacts = Frame(self.main_frame, borderwidth=2, relief='groove')
         w_contacts.grid(row=1, column=0, padx=20, pady=20)
         contacts_label = Label(w_contacts, text='Kontakty', borderwidth=2, relief='groove')
@@ -363,18 +365,25 @@ class GUI:
             status_label = Label(contacts_frame, image=self.off)
             status_label.grid(row=i, column=0)
             self.update_contact_status(contact['id'], status_label)
+
+
+        self.check_invitations(main_field)
+
+
+
+    def check_invitations(self, field):
         r = requests.get(ADDRESS + '/api/invitations',  auth = (self.login,self.password))
         if r.ok:
             invitations = r.json()
         else:
             invitations = []
-
-
         for i in invitations['rejected_invitations']:
             messagebox.showinfo("Uwaga", f"Użytkownik {i['login']} odrzucił twoje zaproszenie")
 
         for i in invitations['my_invitations']:
             self.invitation_popup(i['login'], i['invitation_id'])
+
+        field.after(5000, func= lambda: self.check_invitations(field))
 
     def update_contact_status(self, contact_id, status_label):
         r = requests.get(ADDRESS + '/api/sessions', params={'user_id': contact_id}, auth = (self.login,self.password))
