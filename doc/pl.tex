@@ -33,19 +33,53 @@
   \begin{itemize}
     \item UserApi
     \begin{itemize}
-      \item GET /api/users - zwraca listę wszystkich użytkowników.
-      \item GET /api/users/:id - zwraca szczegółowe informacje o użytkowniku.
-      \item POST /api/users - tworzy nowego użytkownika.
-      \item PATCH /api/users/:token - aktywuje konto użytkownika.
+      \item GET /api/users- zwraca informacje o użytkowniku.
+      \item PUT /api/users/:token - umożliwia użytkownikowi na zmianę ustawień.
       \item DELETE /api/users/:id - usuwa konto użytkownika.
     \end{itemize}
+
+    \item AuthApi
+    \begin{itemize}
+      \item GET /api/auth- zwraca token uwierzytelniający.
+      \item POST /api/auth - tworzy nowego użytkownika.
+      \item PATCH /api/auth/:token - aktywuje konto użytkownika.
+    \end{itemize}
+
     \item ContactApi
     \begin{itemize}
       \item GET /api/contacts/:id - zwraca listę kontaktów dla użytkownika.
-      \item POST /api/contacts - dodaje zaproszenie do znajomych.
-      \item PUT /api/contacts/:id - aktualizuje status kontaktu.
+      \item POST /api/contacts/ - dodaje zaproszenie do znajomych.
       \item DELETE /api/contacts/:id - usuwa kontakt z listy znajomych.
     \end{itemize}
+
+    \item InvitationApi
+    \begin{itemize}
+      \item GET /api/invitations - zwraca listę zaproszeń do użytkownika.
+      \item PUT /api/invitations - aktualizuje stan zaproszenia.
+    \end{itemize}
+
+    \item SessionsApi
+    \begin{itemize}
+      \item GET /api/sessions/:id - zwraca informację o tym, czy użytkownik ma aktualną sesję.
+      \item PUT /api/sessions - przedłuża lub kończy sesję.
+      \item POST /api/sessions/:id - tworzy nową sesję.
+    \end{itemize}
+
+    \item CallSessionsApi
+    \begin{itemize}
+      \item GET /api/callsessions/:id - zwraca informację o tym, czy użytkownik ma aktualną sesję rozmowy.
+      \item PUT /api/callsessions - przedłuża lub kończy sesję rozmowy.
+      \item POST /api/callsessions/:id - tworzy nową sesję rozmowy.
+    \end{itemize}
+
+    \item PendingCallsApi
+    \begin{itemize}
+      \item GET /api/pendingcalls - pobiera informacje o oczekujących połączeniach.
+      \item POST /api/pendingcalls - tworzy nowe informacje o oczekującym połączeniu.
+      \item DELETE /api/pendingcalls - usuwa wpis o oczekującym połączeniu.
+    \end{itemize}
+
+
   \end{itemize}
   \section{Wymagania}
   \paragraph{} W rozdziale opisane są wymagania funkcjonalne oraz niefunkcjonalne z podziałem na aktorów.
@@ -58,13 +92,11 @@
     \item Zalogowany użytkownik może usunąć znajomego z listy znajomych.
     \item Zalogowany użytkownik może zadzwonić do użytkownika ze swojej listy znajomych.
     \item Użytkownik, do którego jest wykonywane połączenie może je odrzucić lub odebrać.
-    \item Podczas rozmowy możliwe jest wyciszenie mikrofonu i dźwięku za pośrednictwem interfejsu aplikacji.
-    \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
+    % \item Podczas rozmowy możliwe jest wyciszenie mikrofonu i dźwięku za pośrednictwem interfejsu aplikacji.
+    % \item Użytkownik ma możliwość ustawienia indywidualnego utworu dźwiękowego dla próby połączenia od każdego z listy znajomych.
     \item Zalogowany użytkownik ma możliwość ustawienia opisu i zdjęcia profilowego, które będą wyświetlane jego znajomym.
     \item Użytkownik inicjujący rozmowę może wybrać między połączeniem nieszyfrowanym a szyfrowanym.
-    \item Niezalogowany użytkownik może zresetować swoje hasło.
     \item Zalogowany użytkownik może zmienić swoje hasło oraz adres e-mail.
-    \item Zalogowany użytkownik ma możliwość usunięcia swojego konta.
   \end{enumerate}
   \subsection{Wymagania niefunkcjonalne}
   \begin{enumerate}
@@ -73,8 +105,8 @@
     \item Hasło użytkownika jest przechowywane jako wynik funkcji skrótu SHA-256.
     \item Aplikacja działa w architekturze klient-serwer.
     \item Aplikacja serwerowa wykorzystuje relacyjną bazę danych.
-    \item Podczas oczekiwania na rozmowę użytkownikowi odtwarza się utwór Jana Sebastiana Bacha - “Bouree In E Minor”.
-    \item Po odebraniu połączenia użytkownikowi zostaje odtworzony krótki sygnał dźwiękowy.
+    %\item Podczas oczekiwania na rozmowę użytkownikowi odtwarza się utwór Jana Sebastiana Bacha - “Bouree In E Minor”.
+    %\item Po odebraniu połączenia użytkownikowi zostaje odtworzony krótki sygnał dźwiękowy.
     \item Próba wykonania połączenia do użytkownika, który aktualnie rozmawia lub nie jest zalogowany kończy się niepowodzeniem.
     \item Użytkownik, do którego próba połączenia się nie powiodła otrzymuje informację tekstową.
     \item Użytkownik podczas próby połączenia do niego słyszy utwór dźwiękowy.
@@ -85,14 +117,13 @@
     \item W trakcie rozmowy między użytkownikami wykorzystywany jest protokół UDP.
     \item Do kompresji dźwięku podczas rozmowy między użytkownikami wykorzystywany jest kodek ADPCM.
     \item Logowanie wymaga podania przez użytkownika loginu (nazwa użytkownika) oraz hasła.
-    \item W procesie resetowania hasła uczestniczy adres e-mail użytkownika.
-    \item Zdjęcia profilowe oraz wybrane przez użytkownika dzwonki przechowywane są na serwerze.
-    \item Przed usunięciem konta użytkownik otrzymuje ostrzeżenie, że jest to nieodwracalne.
-    \item Usunięcie konta przez użytkownika wymaga autoryzacji.
+    % \item Zdjęcia profilowe oraz wybrane przez użytkownika dzwonki przechowywane są na serwerze.
+    \item Zdjęcia profilowe przechowywane są na serwerze.
     \item Autoryzowanie użytkownika odbywa się za pomocą metody Basic Auth.
+    \item Hasło użytkownika musi mieć co najmniej 8 znaków, w tym co najmniej jedną cyfrę, jedną wielką literę i jedną małą literę
   \end{enumerate}
   \section{Narzędzia}
-  \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 16.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python 3.6 dla aplikacji serwerowej oraz Jython dla aplikacji klienckiej.
+  \paragraph{}Serwer działa w oparciu o system operacyjny Ubuntu Server 18.04 LTS. Zarządzanie danymi jest oparte na relacyjnej bazie danych PostgreSQL. Aplikacja kliencka jest wspierana na wybranych systemach operacyjnych z rodziny Windows oraz na systemie operacyjnym Linux. Wybrane języki programowania to Python 3.6, zarówno dla aplikacji serwerowej, jak i aplikacji klienckiej. Główne moduły tego języka, zastosowane w systemie, to CherryPy (do implementacji REST API, na którym opiera się sposób działania aplikacji serwerowej), PyAudio (do implementacji nagrywania oraz odtwarzania dźwięku w aplikacji klienckiej) oraz Tkinter (do implementacji GUI w aplikacji klienckiej).
   Pracę zespołową wspierają:
   \begin{enumerate}
     \item System kontroli wersji Git, hostowany w serwisie GitHub.
@@ -109,7 +140,7 @@
         \label{fig:er}
     \end{figure}
 
-    Zgodnie z rysunkiem \ref{fig:er}, w bazie danych znajduje się osiem tabel. Tabela \texttt{users} zawiera informacje o zarejestrowanych użytkownikach - m.in. ich nazwę konta, hasło przechowywane jako wynik funkcji skrótu oraz adres email. Odwołania do tej tabeli znajdują się w tabelach \texttt{sessions}, która przechowuje informacje o sesjach - o ich czasie rozpoczęcia oraz zakończenia, \texttt{invitations}, która zawiera informacje o zaproszeniach do listy znajomych wysyłanych przez użytkowników, \texttt{contacts}, w której znajdują się wpisy o kontaktach poszczególnych użytkowników, \texttt{keys}, przyporządkowującej rózne rodzaje kluczy do danego użytkownika oraz w tabeli \texttt{call\_history}, która przechowuje dane o historiach połączeń pomiędzy użytkownikami. Dostępne statusy zaproszeń znajdują się w tabeli \texttt{invitation\_statuses}, natomiast dostępne rodzaje kluczy (np. służący aktywacji konta lub zmianie hasła) znaleźć można w tabeli \texttt{key\_types}.
+    Zgodnie z rysunkiem \ref{fig:er}, w bazie danych znajduje się dziesięć tabel. Tabela \texttt{users} zawiera informacje o zarejestrowanych użytkownikach - m.in. ich nazwę konta, hasło przechowywane jako wynik funkcji skrótu oraz adres email. Odwołania do tej tabeli znajdują się w tabelach \texttt{sessions}, która przechowuje informacje o sesjach - o ich czasie rozpoczęcia oraz zakończenia, \texttt{invitations}, która zawiera informacje o zaproszeniach do listy znajomych wysyłanych przez użytkowników, \texttt{contacts}, w której znajdują się wpisy o kontaktach poszczególnych użytkowników, \texttt{keys}, przyporządkowującej rózne rodzaje kluczy do danego użytkownika oraz w tabeli \texttt{call\_history}, która przechowuje dane o historiach połączeń pomiędzy użytkownikami. Dostępne statusy zaproszeń znajdują się w tabeli \texttt{invitation\_statuses}, natomiast dostępne rodzaje kluczy (np. służący aktywacji konta lub zmianie hasła) znaleźć można w tabeli \texttt{key\_types}. Dodatkowo istnieją dwie tabele wspomagające połączenia pomiędzy użytkownikami - \texttt{call\_sessions}, w której są zapisane informacje o sesjach połączeń głosowych oraz \texttt{pending\_calls}, która pośredniczy w wymianie ustawień połączenia między użytkownikami.
 
     \begin{figure}[H]
       \centering

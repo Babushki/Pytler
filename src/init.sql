@@ -10,7 +10,7 @@ CREATE TABLE users (
     email varchar(254) UNIQUE NOT NULL,
     created_at bigint NOT NULL,
     activated boolean DEFAULT FALSE NOT NULL,
-    profile_image bytea,
+    profile_image text,
     description varchar(100)
 );
 
@@ -67,6 +67,7 @@ CREATE TABLE contacts (
 CREATE TABLE call_sessions (
     id serial PRIMARY KEY,
     user_id int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    conversator_id int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at bigint NOT NULL,
     expiration_date bigint NOT NULL
 );
@@ -78,5 +79,8 @@ CREATE TABLE pending_calls (
     address_host varchar(20) NOT NULL,
     address_port int NOT NULL,
     encrypted boolean NOT NULL DEFAULT FALSE,
-    public_key varchar(255)
-)
+    public_key varchar(2500)
+);
+
+INSERT INTO invitation_statuses (name) VALUES ('pending'), ('accepted'), ('rejected_unseen'), ('rejected');
+INSERT INTO key_types (name) VALUES ('activation');
