@@ -11,7 +11,7 @@ from audio_management import AudioPlayer, AudioRecorder
 from codecs_management import Coder, Decoder
 import audio_communication
 
-ADDRESS = 'http://127.0.0.1:8080'
+ADDRESS = 'http://192.168.43.131:8080'
 
 class GUI:
 
@@ -224,12 +224,15 @@ class GUI:
             audio_comm= audio_communication.AudioCommunication(audio_communication.Sockets(self.s1, self.s2),
                         audio_communication.Addresses((host, port1), (host, port2)), audio_communication.Audio(recorder, player))
             audio_comm.start()
+            print('in_with')
             self.in_call = True
             frame.after(1000, lambda: self.in_call_(frame, audio_comm))
 
 
     def in_call_(self, frame, audio_comm):
+        print('in_call')
         if not self.in_call:
+            print('not_in_call')
             audio_comm.stop()
         frame.after(1000, lambda: self.in_call_(frame, audio_comm))
 
