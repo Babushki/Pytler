@@ -78,6 +78,7 @@ CREATE TABLE pending_calls (
     called_user_id int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     address_host varchar(20) NOT NULL,
     address_port int NOT NULL,
+    address_port2 int NOT NULL,
     encrypted boolean NOT NULL DEFAULT FALSE,
     public_key varchar(2500)
 );

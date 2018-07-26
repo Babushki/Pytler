@@ -298,7 +298,7 @@ class PendingCallsService:
 
     @cherrypy.tools.json_out()
     def GET(self):
-        query1 = """SELECT calling_user_id, address_host, address_port, encrypted, public_key FROM pending_calls WHERE called_user_id = %s"""
+        query1 = """SELECT calling_user_id, address_host, address_port, encrypted, public_key, address_port2 FROM pending_calls WHERE called_user_id = %s"""
         query2 = """SELECT id FROM users WHERE login = %s;"""
         query3 = """SELECT login FROM users WHERE id = %s;"""
 
@@ -307,19 +307,22 @@ class PendingCallsService:
             info = db.execute(query1, (user_id, ), ResultSet.ONE)
             if info:
                 user_login = db.execute(query3, (info[0],), ResultSet.ONE)[0]
-                result = {'login': user_login, 'host': info[1], 'id': info[0], 'port': info[2], 'encrypted': info[3]}
+                result = {'login': user_login, 'host': info[1], 'id': info[0], 'port': info[2], 'encrypted': info[3], 'port2': info[5]}
                 if info[3]:
                     result['public_key'] = info[4]
+                return result
+            else:
+                return []
 
     @cherrypy.tools.json_in()
     def POST(self):
-        query1 = """INSERT INTO pending_calls (calling_user_id, called_user_id, address_host, address_port, encrypted, public_key)
-                    VALUES (%s, %s, %s, %s, %s, %s)"""
+        query1 = """INSERT INTO pending_calls (calling_user_id, called_user_id, address_host, address_port, encrypted, public_key, address_port2)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)"""
         query2 = """SELECT id FROM users WHERE login = %s;"""
         request = cherrypy.request.json
         with PYTLER_DB as db:
             user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
-            db.execute(query1, (user_id, request['user_id'], request['host'], request['port'], request['encrypted'], request.get('public_key', None)), ResultSet.NONE)
+            db.execute(query1, (user_id, request['user_id'], request['host'], request['port'], request['encrypted'], request.get('public_key', None), request['address_port2']), ResultSet.NONE)
 
     def DELETE(self):
         query1 = """DELETE FROM pending_calls WHERE calling_user_id = %s"""

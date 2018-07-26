@@ -5,6 +5,11 @@ import hashlib
 import time
 from base64 import b64decode, b64encode
 from tkinter.filedialog import askopenfilename
+import socket
+
+from audio_management import AudioPlayer, AudioRecorder
+from codecs_management import Coder, Decoder
+import audio_communication
 
 ADDRESS = 'http://127.0.0.1:8080'
 
@@ -27,7 +32,12 @@ class GUI:
         self.contact_image = None
         self.profile_image = None
         self.image_raw = None
+        self.calling = False
+        self.calling_id = None
         self.root.protocol('WM_DELETE_WINDOW', func=self.close_window)
+        self.s1 = None
+        self.s2 = None
+        self.in_call = False
 
     def close_window(self):
         r = requests.get(ADDRESS + '/api/sessions', auth = (self.login,self.password))
@@ -35,6 +45,7 @@ class GUI:
             my_status = r.json()['status']
             if my_status == 'active':
                 r = requests.put(ADDRESS + '/api/sessions', params={'status': 'end'}, auth = (self.login,self.password))
+        self.delete_pending()
         self.root.destroy()
 
     def choose_login_register(self):
@@ -179,6 +190,7 @@ class GUI:
         self.main_frame.after(10000, func = self.update_my_status)
 
     def reset_frame_main_view(self, frame):
+        self.calling = False
         for widget in frame.winfo_children():
             widget.destroy()
 
@@ -198,13 +210,85 @@ class GUI:
             contact_image.grid_propagate(False)
             contact_image.pack_propagate(False)
 
-        call_button = Button(frame, text='Zadzwoń')
+        call_button = Button(frame, text='Zadzwoń', command=lambda: self.call(contact_info, frame))
         call_button.grid(column=1, row=0)
         if contact_info['description']:
             contact_description = Label(frame, text= 'Opis: ' + contact_info['description'])
         else:
             contact_description = Label(frame, text= 'Opis: brak')
         contact_description.grid(columnspan=2, row=1)
+
+    CHUNK_SIZE = 4096
+    def answer_call(self, host, port1, port2, frame):
+        with AudioRecorder(chunk_= self.CHUNK_SIZE) as recorder, AudioPlayer(chunk_= self.CHUNK_SIZE) as player:
+            audio_comm= audio_communication.AudioCommunication(audio_communication.Sockets(self.s1, self.s2),
+                        audio_communication.Addresses((host, port1), (host, port2)), audio_communication.Audio(recorder, player))
+            audio_comm.start()
+            self.in_call = True
+            frame.after(1000, lambda: self.in_call_(frame, audio_comm))
+
+
+    def in_call_(self, frame, audio_comm):
+        if not self.in_call:
+            audio_comm.stop()
+        frame.after(1000, lambda: self.in_call_(frame, audio_comm))
+
+
+    def check_pending_call(self, frame):
+        r = requests.get(ADDRESS + '/api/pendingcall', auth = (self.login,self.password))
+        if r.ok:
+            if r.json():
+                info = r.json()
+                if self.calling and info['id'] == self.calling_id:
+                    self.answer_call(info['host'], info['port'], info['port2'], frame)
+                    print('odebrał')
+                elif not self.calling:
+                    print('mam połączenie')
+                    for c in self.contacts:
+                        if c['id'] == info['id']:
+                            name = info['login']
+                    result = messagebox.askquestion('Połączenie', f'Czy chcesz odebrać połączenie od {name}?')
+                    if result == 'yes':
+                        self.s1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        self.s1.connect(('10.255.255.255', 1))
+                        address1 = self.s1.getsockname()
+                        print(address1)
+                        self.s2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        self.s2.connect(('10.255.255.255', 1))
+                        address2 = self.s2.getsockname()
+                        print(address2)
+                        r = requests.post(ADDRESS + '/api/pendingcall', auth = (self.login,self.password), json={'user_id':info['id'], 'host': address1[0], 'port':address1[1], 'encrypted':False, 'address_port2': address2[1]})
+                        self.answer_call(info['host'], info['port'], info['port2'], frame)
+                        print('odebralem')
+            else:
+                frame.after(1000, func = lambda: self.check_pending_call(frame))
+
+
+    def stop_calling(self, frame):
+        self.delete_pending()
+        self.reset_frame_main_view(frame)
+    def call(self, contact_info, frame):
+        self.delete_pending()
+        self.reset_frame_main_view(frame)
+        self.calling = True
+        label_calling = Label(frame, text='calling')
+        label_calling.grid()
+        self.s1 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s1.connect(('10.255.255.255', 1))
+        address1 = self.s1.getsockname()
+        print(address1)
+        self.s2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s2.connect(('10.255.255.255', 1))
+        address2 = self.s2.getsockname()
+        print(address2)
+        r = requests.post(ADDRESS + '/api/pendingcall', auth = (self.login,self.password), json={'user_id':contact_info['id'], 'host': address1[0], 'port':address1[1], 'encrypted':False, 'address_port2': address2[1]})
+        if r.ok:
+            self.calling = True
+            self.calling_id = contact_info['id']
+        #frame.after(15000, func= lambda: self.stop_calling(frame))
+
+    def delete_pending(self):
+        r = requests.delete(ADDRESS + '/api/pendingcall', auth = (self.login,self.password))
 
     def popup_change_password(self):
         popup = Toplevel()
@@ -381,6 +465,7 @@ class GUI:
 
     def main_view(self):
         self.reset_frame()
+        self.delete_pending()
         main_field = Frame(self.main_frame, width=400, height=400, borderwidth=2, relief='groove')
         main_field.grid(column=1, row=1, rowspan=10, pady=20, padx=(0,20))
         main_field.grid_propagate(False)
@@ -419,6 +504,7 @@ class GUI:
             self.update_contact_status(contact['id'], status_label)
 
         self.check_invitations(main_field)
+        self.check_pending_call(main_field)
 
     def check_invitations(self, field):
         r = requests.get(ADDRESS + '/api/invitations',  auth = (self.login,self.password))
