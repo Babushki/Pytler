@@ -12,7 +12,6 @@ from codecs_management import Coder, Decoder
 import audio_communication
 
 ADDRESS = 'http://192.168.43.131:8080'
-AUDIO = None
 
 class GUI:
 
