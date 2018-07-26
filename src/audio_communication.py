@@ -33,9 +33,9 @@ class AudioCommunication:
 
     def _get_excepted_received_size(self):
         # TODO
-        # return self.audio.recorder.chunk_ / (self.audio.coder.width * 2)
-        # return self.audio.recorder.chunk_
-        return CHUNK_SIZE
+        # return self.audio.recorder.chunk / (self.audio.coder.width * 2)
+        return self.audio.recorder.chunk
+        # return CHUNK_SIZE
 
     def _encrypt(self, data):
         return pyaes.AESModeOfOperationCTR(self.shared_secret).encrypt(data)

@@ -12,6 +12,7 @@ from codecs_management import Coder, Decoder
 import audio_communication
 
 ADDRESS = 'http://192.168.43.131:8080'
+AUDIO = None
 
 class GUI:
 
@@ -221,14 +222,13 @@ class GUI:
 
     CHUNK_SIZE = 4096
     def answer_call(self, host, port1, port2, frame):
-        with AudioRecorder(chunk_= self.CHUNK_SIZE) as recorder, AudioPlayer(chunk_= self.CHUNK_SIZE) as player:
-            self.audio_comm= audio_communication.AudioCommunication(audio_communication.Sockets(self.s1, self.s2),
-                        audio_communication.Addresses((host, port1), (host, port2)), audio_communication.Audio(recorder, player))
-            self.audio_comm.start()
-            print(host, port1, port2)
-            print('in_with')
-            self.in_call = True
-            frame.after(1000, lambda: self.in_call_(frame, self.audio_comm))
+        self.audio_comm= audio_communication.AudioCommunication(audio_communication.Sockets(self.s1, self.s2),
+                    audio_communication.Addresses((host, port1), (host, port2)), AUDIO)
+        self.audio_comm.start()
+        print(host, port1, port2)
+        print('in_with')
+        self.in_call = True
+        frame.after(1000, lambda: self.in_call_(frame, self.audio_comm))
 
 
     def in_call_(self, frame, audio_comm):
@@ -599,4 +599,8 @@ class GUI:
         self.root.mainloop()
 
 if __name__ == '__main__':
+    with AudioRecorder(chunk_=4096) as audio_recorder, \
+            AudioPlayer(chunk_=4096) as audio_player:
+        global AUDIO
+        AUDIO = audio_communication.Audio(audio_recorder, audio_player)
     GUI().main()
