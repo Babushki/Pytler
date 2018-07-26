@@ -30,6 +30,7 @@ class GUI:
         self.off = PhotoImage(file='off.png')
         self.image = None
         self.contact_image = None
+        self.audio_comm = None
         self.profile_image = None
         self.image_raw = None
         self.calling = False
@@ -221,20 +222,21 @@ class GUI:
     CHUNK_SIZE = 4096
     def answer_call(self, host, port1, port2, frame):
         with AudioRecorder(chunk_= self.CHUNK_SIZE) as recorder, AudioPlayer(chunk_= self.CHUNK_SIZE) as player:
-            audio_comm= audio_communication.AudioCommunication(audio_communication.Sockets(self.s1, self.s2),
+            self.audio_comm= audio_communication.AudioCommunication(audio_communication.Sockets(self.s1, self.s2),
                         audio_communication.Addresses((host, port1), (host, port2)), audio_communication.Audio(recorder, player))
-            audio_comm.start()
+            self.audio_comm.start()
+            print(host, port1, port2)
             print('in_with')
             self.in_call = True
-            frame.after(1000, lambda: self.in_call_(frame, audio_comm))
+            frame.after(1000, lambda: self.in_call_(frame, self.audio_comm))
 
 
     def in_call_(self, frame, audio_comm):
         print('in_call')
         if not self.in_call:
             print('not_in_call')
-            audio_comm.stop()
-        frame.after(1000, lambda: self.in_call_(frame, audio_comm))
+            self.audio_comm.stop()
+        frame.after(1000, lambda: self.in_call_(frame, self.audio_comm))
 
 
     def check_pending_call(self, frame):
