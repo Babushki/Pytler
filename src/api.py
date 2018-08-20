@@ -100,7 +100,7 @@ class AuthService:
         Token aktywacyjny: {token}
 
         """
-        msg = EmailMessage()auth
+        msg = EmailMessage()
         msg.set_content(message_content)
         msg['Subject'] = 'Aktywacja konta w w aplikacji Pytler'
         msg['From'] = config['Email']['Address']
