@@ -7,6 +7,11 @@ import cherrypy
 import psycopg2
 from enum import Enum, auto
 
+import smtplib
+from email.message import EmailMessage
+import configparser
+from typing import Dict
+
 class ResultSet(Enum):
     NONE = None
     ONE = auto()
@@ -81,7 +86,36 @@ class AuthService:
             user_id = db.execute(query1, (request['login'], request['password'], request['email']), ResultSet.ONE)[0]
             db.execute(query2, (activation_key_type_id, user_id, token), ResultSet.NONE)
 
-        return {'activation_token': token}
+        self._send_activation_email(request['email'], token, request['login'])
+
+    def _send_activation_email(self, email: str, token: str, login: str) -> None:
+        CONFIG_FILE = 'email.config'
+        config = self._read_email_config(CONFIG_FILE)
+
+        message_content = f"""Email aktywacyjny dla konta o loginie {login} w aplikacji Pytler\n
+        \n
+        Jeśli nie zakładałeś konta w serwisie możesz zignorować ten email. \n
+        \n
+        Aby aktywować konto wklej poniższy token w odpowiednie miejsce w aplikacji. \n
+        Token aktywacyjny: {token}
+
+        """
+        msg = EmailMessage()auth
+        msg.set_content(message_content)
+        msg['Subject'] = 'Aktywacja konta w w aplikacji Pytler'
+        msg['From'] = config['Email']['Address']
+        msg['To'] = email
+
+        server = smtplib.SMTP(config['Server']['Host'], config['Server']['Port'])
+        server.ehlo()
+        server.starttls()
+        server.login(config['Email']['Address'], config['Email']['Password'])
+        server.send_message(msg)
+
+    def _read_email_config(self, file_name: str) -> Dict[str, str]:
+        config = configparser.ConfigParser()
+        config.read(file_name)
+        return config
 
     def PATCH(self, token):
         query1 = """UPDATE keys SET expiration_date = extract(epoch from now()) WHERE expiration_date > extract(epoch from now()) AND value = %s RETURNING user_id;"""
@@ -104,10 +138,46 @@ class UserService:
 
     @cherrypy.tools.json_in()
     def PUT(self):
-        query = """UPDATE users SET email = %s, password = %s, description = %s, profile_image = %s WHERE login = %s;"""
         request = cherrypy.request.json
+        login = cherrypy.request.login
+
+        password = request.get('password')
+        if password:
+            self._update_password(password, login)
+
+        email = request.get('email')
+        if email:
+            self._update_email(email, login)
+
+        description = request.get('description')
+        if description:
+            self._update_description(description, login)
+
+        profile_image = request.get('profile_image')
+        if profile_image:
+            self._update_profile_image(profile_image, login)
+
+    def _update_password(self, new_password: str, login: str):
+        query = 'UPDATE users set password = %s WHERE login = %s'
+        if len(new_password) != 64:
+            raise cherrypy.HTTPError(400, "Bad request")
         with PYTLER_DB as db:
-            db.execute(query, (request['email'], request['password'], request['description'], request['image'], cherrypy.request.login), ResultSet.NONE)
+            db.execute(query, (new_password, login), ResultSet.NONE)
+
+    def _update_email(self, new_email: str, login: str):
+        query = 'UPDATE users set email = %s WHERE login = %s'
+        with PYTLER_DB as db:
+            db.execute(query, (new_email, login), ResultSet.NONE)
+
+    def _update_description(self, new_description: str, login: str):
+        query = 'UPDATE users set description = %s WHERE login = %s'
+        with PYTLER_DB as db:
+            db.execute(query, (new_description, login), ResultSet.NONE)
+
+    def _update_profile_image(self, new_profile_image: str, login: str):
+        query = 'UPDATE users set profile_image = %s WHERE login = %s'
+        with PYTLER_DB as db:
+            db.execute(query, (new_profile_image, login), ResultSet.NONE)
 
     def DELETE(self):
         query = """DELETE FROM users WHERE login = %s;"""

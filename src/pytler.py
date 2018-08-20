@@ -1,26 +1,49 @@
 import requests
 from typing import Dict, List, Union
+import hashlib
 
-ADDRESS = 'http://192.168.43.131:8080'
+ADDRESS = 'http://127.0.0.1:8080'
 
 
 class Pytler:
 
-    def __init__(self, login, password):
-        self.login = login
-        self.password = password
+    def __init__(self):
+        self.nick = None
+        self.password = None
 
-    def register_user(self, login: str, password: str, email: str):
-        pass
+    def register_user(self, login: str, password: str, email: str) -> bool:
+        #TODO sprawdzanie jakości hasła i ew. mejla
 
-    def activate_account(self, token: str):
-        pass
+        password = self._encode_password(password)
+        r = requests.post(ADDRESS + '/api/auth', json={'login': login, 'password': password, 'email': email})
+        return True if r.ok else False
 
-    def login(self, login: str, password: str):
-        pass
+    def _encode_password(self, password: str) -> str:
+        return str(hashlib.sha256(password.encode()).hexdigest())
 
-    def get_user_info(self):
-        pass
+    def activate_account(self, token: str) -> bool:
+        #TODO danie znać użytkownikowi że token jest złej długości
+        r = requests.patch(ADDRESS + '/api/auth', params={'token':token})
+        return True if r.ok else False
+
+    def login(self, login: str, password: str) -> bool:
+        #TODO co w przypadku braku gdy login lub password = None - załatwiamy to tutaj czy w gui?
+        password = self._encode_password(password)
+        r = requests.get(ADDRESS + '/api/auth', params = {'login': login, 'password': password})
+        if r.ok:
+            self.nick = login
+            self.password = password
+            return True
+        else:
+            return False
+
+    def get_user_info(self) -> Dict[str, Union[int, str]]:
+        r = requests.get(ADDRESS + '/api/user', auth=(self.nick,self.password))
+        if r.ok:
+            user_info = r.json()
+            return user_info
+        else:
+            pass
 
     def change_password(self, new_password: str):
         pass
