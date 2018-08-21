@@ -80,7 +80,8 @@ CREATE TABLE pending_calls (
     address_port int NOT NULL,
     address_port2 int NOT NULL,
     encrypted boolean NOT NULL DEFAULT FALSE,
-    public_key varchar(2500)
+    public_key varchar(2500),
+    expiration_date bigint NOT NULL
 );
 
 INSERT INTO invitation_statuses (name) VALUES ('pending'), ('accepted'), ('rejected_unseen'), ('rejected');
