@@ -4,12 +4,21 @@ import hashlib
 
 ADDRESS = 'http://127.0.0.1:8080'
 
-
+from audio_communication import Addresses, Sockets, AudioCommunication, Audio, AudioRecorder, AudioPlayer
+import socket
 class Pytler:
 
     def __init__(self):
         self.nick = None
         self.password = None
+        self.email = None
+        self.description = None
+        self.contacts = None
+        self.in_socket = None
+        self.out_socket = None
+        self.audio_recorder = AudioRecorder()
+        self.audio_player = AudioPlayer()
+        self.audio_comm = None
 
     def register_user(self, login: str, password: str, email: str) -> bool:
         #TODO sprawdzanie jakości hasła i ew. mejla
@@ -37,7 +46,7 @@ class Pytler:
         else:
             return False
 
-    def get_user_info(self) -> Union[Dict[str, Union[int, str]], False]:
+    def get_user_info(self) -> Union[Dict[str, Union[int, str]], bool]:
         r = requests.get(ADDRESS + '/api/user', auth=(self.nick,self.password))
         if r.ok:
             user_info = r.json()
@@ -50,6 +59,7 @@ class Pytler:
         password = self._encode_password(new_password)
         r = requests.put(ADDRESS + '/api/user', auth=(self.nick,self.password), json={'password':password})
         if r.ok:
+            self.password = password
             return True
         else:
             return False
@@ -84,7 +94,7 @@ class Pytler:
         else:
             return False
 
-    def get_contacts(self) -> Union[List[Dict[str, Union[str, int]]], False]:
+    def get_contacts(self) -> Union[List[Dict[str, Union[str, int]]], bool]:
         r = requests.get(ADDRESS + '/api/contacts', auth=(self.nick,self.password))
         if r.ok:
             return r.json()
@@ -105,7 +115,7 @@ class Pytler:
         else:
             return False
 
-    def get_invitations(self) -> Union[Dict[str, List[Dict[str, Union[int, str]]]], False]:
+    def get_invitations(self) -> Union[Dict[str, List[Dict[str, Union[int, str]]]], bool]:
         r = requests.get(ADDRESS + '/api/invitations', auth=(self.nick,self.password))
         if r.ok:
             return r.json()
@@ -126,7 +136,7 @@ class Pytler:
         else:
             return False
 
-    def get_user_status(self, user_id: int = None) -> Union[str, False]:
+    def get_user_status(self, user_id: int = None) -> Union[str, bool]:
         r = requests.get(ADDRESS + '/api/sessions', auth=(self.nick,self.password), params={'user_id': user_id})
         if r.ok:
             return r.json()['status']
@@ -204,6 +214,27 @@ class Pytler:
             return True
         else:
             return False
+
+    def create_sockets(self):
+        self.in_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.in_socket.connect(('10.255.255.255', 1))
+        self.out_socket.connect(('10.255.255.255', 1))
+        print(self.in_socket.getsockname())
+        print(self.out_socket.getsockname())
+
+    def connect(self, host, in_port, out_port):
+        self.audio_comm = AudioCommunication(Sockets(self.in_socket, self.out_socket),
+            Addresses((host, in_port), (host, out_port)),
+            Audio(self.audio_recorder, self.audio_player),
+        )
+
+    def start_comm(self):
+        self.audio_comm.start()
+
+    def stop_comm(self):
+        self.audio_comm.stop()
+
 
 
 
