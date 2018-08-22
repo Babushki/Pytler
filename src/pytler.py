@@ -179,6 +179,23 @@ class Pytler:
     def logout(self):
         r = requests.put(ADDRESS + '/api/sessions', auth=(self.nick,self.password), params={'status': 'end'})
         if r.ok:
+            self.nick = None
+            self.password = None
+            self.email = None
+            self.description = None
+            self.activated = None
+            self.created_at = None
+            self.id = None
+            self.profile_image = None
+
+            self.contacts = None
+
+            self.host = None
+            self.in_socket = None
+            self.out_socket = None
+            self.audio_recorder = None
+            self.audio_player = None
+            self.audio_comm = None
             return True
         else:
             return False

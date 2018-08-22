@@ -3,7 +3,6 @@ from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
 from pytler import Pytler
 
-#TODO tworzenie i odświeżanie sesji
 
 class GUI:
     def __init__(self):
@@ -18,6 +17,14 @@ class GUI:
         self.back.pack_propagate(0)
         self.back.pack(fill=BOTH, expand=1)
         self.pytler = Pytler()
+        self.logged = False
+        self.update_session()
+
+    def update_session(self):
+        if self.logged:
+            self.pytler.update_session()
+
+        self.root.after(10000, func=self.update_session)
 
     def reset_back(self):
         self.back.destroy()
@@ -149,6 +156,7 @@ class GUI:
             r = self.pytler.get_user_info()
             if r:
                 if self.pytler.activated:
+                    self.logged=True
                     self.main_view()
                 else:
                     messagebox.showwarning('Uwaga', 'Konto nie zostało jeszcze aktywowane - prosimy o podanie tokenu aktywacyjnego z wiadomości email')
@@ -181,12 +189,17 @@ class GUI:
                 return
             else:
                 messagebox.showwarning('Gratulacje', 'Konto zostało pomyślnie aktywowane')
+                self.logged=True
                 self.main_view()
+
+    def logout(self):
+        self.logged = False
+        self.pytler.logout()
+        self.view_login_or_register()
 
     def main_view(self):
         self.reset_back()
         self.root.geometry('1000x500')
-
 
         contact_frame = Frame(master=self.back, bg='black', height=500, width=200)
         contact_frame.pack_propagate(0)
@@ -200,8 +213,6 @@ class GUI:
         menu_frame.pack_propagate(0)
         menu_frame.pack()
 
-
-
         content_frame = Frame(master=main_frame, bg='blue', width=800, height=350)
         content_frame.pack_propagate(0)
         content_frame.pack()
@@ -212,6 +223,25 @@ class GUI:
 
         self.generate_topbar_content(menu_frame)
         self.generate_contacts(contact_frame, content_frame, action_bar)
+        self.popup_invitations()
+
+    def popup_invitations(self):
+        r = self.pytler.get_invitations()
+
+        for i in r['my_invitations']:
+            result = messagebox.askquestion(f'Masz zaproszenie od {i["login"]}', f'Czy chcesz dodać {i["login"]} do znajomych?')
+            if result=='yes':
+                r1 = self.pytler.accept_invitation(i['invitation_id'])
+                if r1:
+                    messagebox.showinfo('Gratulacje', f'Poprawnie dodano {i["login"]} do znajomych')
+                    self.main_view()
+                else:
+                    messagebox.showerror('Błąd', f'Nie udało się dodać {i["login"]} do znajomych')
+            elif result=='no':
+                r1 = self.pytler.decline_invitation(i['invitation_id'])
+
+        for i in r['rejected_invitations']:
+            messagebox.showinfo('Ojej', f'{i["login"]} odrzucił twoje zaproszenie')
 
     def generate_contacts(self, contact_frame, content_frame, action_bar):
         r = self.pytler.get_contacts()
@@ -229,11 +259,15 @@ class GUI:
         scrollbar = Scrollbar(frame2)
         scrollbar.pack(fill=BOTH, expand=1, side=RIGHT)
         contact_list = Listbox(frame2, yscrollcommand = scrollbar.set, width= 180, bg='black', font=self.font, fg='white')
-        contact_list.insert(END, 'login')
         if self.pytler.contacts:
-            for contact in self.pytler.contacts:
+            for i, contact in enumerate(self.pytler.contacts):
                 contact_list.insert(END, contact['login'])
-        contact_list.pack( side = LEFT, fill = BOTH )
+                status = self.pytler.get_user_status(contact['id'])
+                if status == 'active':
+                    contact_list.itemconfig(i, foreground='green')
+                elif status == 'inactive':
+                    contact_list.itemconfig(i, foreground='red')
+        contact_list.pack(side = LEFT, fill = BOTH)
 
         contact_list.bind('<<ListboxSelect>>', lambda evt: self.onselect(evt, content_frame, action_bar))
 
@@ -268,14 +302,15 @@ class GUI:
 
     def generate_topbar_content(self, topbar):
 
-        home = self.create_button('Strona główna', topbar, padx=(300,20), height=50)
+        home = self.create_button('Strona główna', topbar, padx=(300,20), height=50, action=self.main_view)
         home.pack(fill=BOTH, expand=1, side=RIGHT)
 
         settings = self.create_button('Ustawienia', topbar, padx=(20,20), height=50)
         settings.pack(fill=BOTH, expand=1, side=RIGHT)
 
-        logout = self.create_button('Wyloguj', topbar, padx=(20,20), height=50)
+        logout = self.create_button('Wyloguj', topbar, padx=(20,20), height=50, action=self.logout)
         logout.pack(fill=BOTH, expand=1, side=RIGHT)
+
 
     def onselect(self, evt, content_frame, action_bar):
         #TODO wyświetlanie info
