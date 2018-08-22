@@ -252,7 +252,7 @@ class GUI:
         r = self.pytler.get_contacts()
         if not r:
             messagebox.showwarning('Błąd', 'Błąd podczas wczytywania kontaktów')
-
+        self.delete_children(contact_frame)
         frame = Frame(master=contact_frame, bg='black')
         frame.pack()
         label = self.create_label('Kontakty', frame, width = 200, pady=(20,0), fg='white', bg='black')
@@ -264,14 +264,7 @@ class GUI:
         scrollbar = Scrollbar(frame2)
         scrollbar.pack(fill=BOTH, expand=1, side=RIGHT)
         contact_list = Listbox(frame2, yscrollcommand = scrollbar.set, width= 180, bg='black', font=self.font, fg='white')
-        if self.pytler.contacts:
-            for i, contact in enumerate(self.pytler.contacts):
-                contact_list.insert(END, contact['login'])
-                status = self.pytler.get_user_status(contact['id'])
-                if status == 'active':
-                    contact_list.itemconfig(i, foreground='green')
-                elif status == 'inactive':
-                    contact_list.itemconfig(i, foreground='red')
+        self.update_contacts(contact_list)
         contact_list.pack(side = LEFT, fill = BOTH)
 
         contact_list.bind('<<ListboxSelect>>', lambda evt: self.onselect(evt, content_frame, action_bar))
@@ -281,6 +274,17 @@ class GUI:
         add_button = self.create_button('Dodaj kontakt +', frame1, width = 150, height=60, fg='black', bg='white', action=lambda: self.popup('Wyślij zaproszenie', 'Login', 'Wyślij', self.popup_add_contact))
         add_button.pack(fill=BOTH, expand=1, side=TOP)
 
+    def update_contacts(self, contact_list):
+        contact_list.delete(0,END)
+        if self.pytler.contacts:
+            for i, contact in enumerate(self.pytler.contacts):
+                contact_list.insert(END, contact['login'])
+                status = self.pytler.get_user_status(contact['id'])
+                if status == 'active':
+                    contact_list.itemconfig(i, foreground='green')
+                elif status == 'inactive':
+                    contact_list.itemconfig(i, foreground='red')
+        contact_list.after(5000, lambda: self.update_contacts(contact_list))
 
     def popup_add_contact(self, popup, entry_value):
         if not entry_value:
