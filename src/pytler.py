@@ -230,6 +230,8 @@ class Pytler:
         r = requests.get(ADDRESS + '/api/pendingcall', auth=(self.nick,self.password))
         if r.ok:
             return r.json()
+        else:
+            return []
 
     def create_new_pending_call(self, called_user_id: int, address_host: str, address_port1: int, address_port2: int, encrypted: bool = False, public_key: str = None):
         r = requests.post(ADDRESS + '/api/pendingcall', auth=(self.nick,self.password), json={'user_id': called_user_id, 'host': address_host, 'port': address_port1, 'encrypted': encrypted, 'public_key': public_key, 'port2': address_port2})
@@ -251,11 +253,11 @@ class Pytler:
         # self.in_socket.connect(('10.255.255.255', 1))
         # self.out_socket.connect(('10.255.255.255', 1))
         self.host = socket.gethostbyname(socket.gethostname())
-        self.in_socket.bind((self.host, 8888))
-        self.out_socket.bind((self.host, 8889))
+        self.in_socket.bind((self.host, 0))
+        self.out_socket.bind((self.host, 0))
         print(self.in_socket.getsockname())
         print(self.out_socket.getsockname())
-        return self.in_socket.getsockname(), self.out_socket.getsockname()
+        return self.in_socket.getsockname()[1], self.out_socket.getsockname()[1]
 
     def connect(self, host, in_port, out_port):
         self.audio_recorder = AudioRecorder()

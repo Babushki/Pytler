@@ -21,6 +21,9 @@ class GUI:
         self.logged = False
         self.update_session()
         self.settings = None
+        self.calling_id = None
+        self.calling = False
+        self.in_call = False
 
     def update_session(self):
         if self.logged:
@@ -205,6 +208,10 @@ class GUI:
     def main_view(self):
         self.reset_back()
         self.root.geometry('1000x500')
+
+        self.in_call = False
+        self.calling = False
+        self.calling_id = None
 
         contact_frame = Frame(master=self.back, bg='black', height=500, width=200)
         contact_frame.pack_propagate(0)
@@ -456,7 +463,7 @@ class GUI:
             return
         else:
             messagebox.showinfo('Gratulacje', f'Poprawnie zmieniono adres email')
-            self.pytler.description = entry_value
+            self.pytler.email = entry_value
             self.settings.invoke()
             popup.destroy()
 
@@ -523,7 +530,40 @@ class GUI:
             child.destroy()
 
     def make_call(self, index):
-        pass
+        in_port, out_port = self.pytler.create_sockets()
+        host = self.pytler.host
+        print(in_port, out_port, host)
+        self.pytler.create_new_pending_call(self.pytler.contacts[index]['id'], host, in_port, out_port)
+        self.calling_id = self.pytler.contacts[index]['id']
+        self.view_calling(index)
+
+    def view_calling(self, index):
+        self.calling = True
+        self.reset_back()
+        self.root.geometry('400x100')
+
+        label = self.create_label(f'Dzwonię do {self.pytler.contacts[index]["login"]}...', self.back, width = 200, padx=(30,10))
+        label.pack(fill=BOTH, expand=1, side=TOP)
+        button = self.create_button('Anuluj', self.back, action=self.check_calling, padx=(10,20), height=40)
+        button.pack(fill=BOTH, expand=1, side=TOP)
+
+        self.root.after(15000, self.check_calling)
+        self.check_if_call_answered()
+
+    def check_if_call_answered(self):
+        pending_calls = self.pytler.get_pending_calls()
+        for call in pending_calls:
+            print(call)
+            if call['id'] == self.calling_id:
+                self.calling = False
+                self.in_call = True
+        if self.calling:
+            self.root.after(100, self.check_if_call_answered)
+
+    def check_calling(self):
+        if self.calling == True:
+            self.calling = False
+            self.main_view()
 
     def main(self):
         self.view_login_or_register()

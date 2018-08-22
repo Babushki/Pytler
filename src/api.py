@@ -377,15 +377,15 @@ class PendingCallsService:
 
         with PYTLER_DB as db:
             user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
-            info = db.execute(query1, (user_id, ), ResultSet.ONE)
-            if info:
+            i = db.execute(query1, (user_id, ), ResultSet.ALL)
+            result = []
+            for info in i:
                 user_login = db.execute(query3, (info[0],), ResultSet.ONE)[0]
-                result = {'login': user_login, 'host': info[1], 'id': info[0], 'port': info[2], 'encrypted': info[3], 'port2': info[5]}
+                a = {'login': user_login, 'host': info[1], 'id': info[0], 'port': info[2], 'encrypted': info[3], 'port2': info[5]}
                 if info[3]:
-                    result['public_key'] = info[4]
-                return result
-            else:
-                return []
+                    a['public_key'] = info[4]
+                result.append(a)
+            return result
 
     @cherrypy.tools.json_in()
     def POST(self):
