@@ -84,7 +84,6 @@ class Pytler:
         else:
             return False
 
-
     def change_description(self, new_description: str) -> bool:
         r = requests.put(ADDRESS + '/api/user', auth=(self.nick,self.password), json={'description':new_description})
         if r.ok:
@@ -240,12 +239,19 @@ class Pytler:
         else:
             return False
 
-    def delete_pending_call(self):
-        r = requests.delete(ADDRESS + '/api/pendingcall', auth=(self.nick,self.password))
-        if r.ok:
-            return True
+    def delete_pending_call(self, user_id=None):
+        if not user_id:
+            r = requests.delete(ADDRESS + '/api/pendingcall', auth=(self.nick,self.password))
+            if r.ok:
+                return True
+            else:
+                return False
         else:
-            return False
+            r = requests.delete(ADDRESS + '/api/pendingcall', auth=(self.nick,self.password), params={'user_id': user_id})
+            if r.ok:
+                return True
+            else:
+                return False
 
     def create_sockets(self):
         self.in_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

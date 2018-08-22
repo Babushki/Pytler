@@ -397,12 +397,17 @@ class PendingCallsService:
             user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
             db.execute(query1, (user_id, request['user_id'], request['host'], request['port'], request['encrypted'], request.get('public_key', None), request['port2']), ResultSet.NONE)
 
-    def DELETE(self):
-        query1 = """DELETE FROM pending_calls WHERE calling_user_id = %s"""
-        query2 = """SELECT id FROM users WHERE login = %s;"""
-        with PYTLER_DB as db:
-            user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
-            db.execute(query1, (user_id,), ResultSet.NONE)
+    def DELETE(self, user_id=None):
+        if not user_id:
+            query1 = """DELETE FROM pending_calls WHERE calling_user_id = %s"""
+            query2 = """SELECT id FROM users WHERE login = %s;"""
+            with PYTLER_DB as db:
+                user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]
+                db.execute(query1, (user_id,), ResultSet.NONE)
+        else:
+            query1 = """DELETE FROM pending_calls WHERE calling_user_id = %s"""
+            with PYTLER_DB as db:
+                db.execute(query1, (user_id,), ResultSet.NONE)
 
 
 
