@@ -81,7 +81,6 @@ class AuthService:
                     VALUES (%s, %s, %s, extract(epoch from now() + interval '1 week'));"""
         activation_key_type_id = 1
         request = cherrypy.request.json
-        request.update({k: v.casefold() for k, v in request.items() if k in ('login', 'email')})
         if len(request['password']) != 64:
             raise cherrypy.HTTPError(400, "Bad request")
         token = ''.join(random.choices(string.ascii_uppercase + string.digits, k=TOKEN_LENGTH))
