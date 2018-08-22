@@ -29,8 +29,6 @@ class Pytler:
         self.audio_comm = None
 
     def register_user(self, login: str, password: str, email: str) -> bool:
-        #TODO sprawdzanie jakości hasła i ew. mejla
-
         password = self._encode_password(password)
         r = requests.post(ADDRESS + '/api/auth', json={'login': login, 'password': password, 'email': email})
         return True if r.ok else False
@@ -54,7 +52,7 @@ class Pytler:
         else:
             return False
 
-    def get_user_info(self) -> Union[Dict[str, Union[int, str]], bool]:
+    def get_user_info(self) -> bool:
         r = requests.get(ADDRESS + '/api/user', auth=(self.nick,self.password))
         if r.ok:
             user_info = r.json()
@@ -64,7 +62,7 @@ class Pytler:
             self.description = user_info['description']
             self.created_at = user_info['created_at']
             self.id = user_info['id']
-            return user_info
+            return True
         else:
             return False
 
