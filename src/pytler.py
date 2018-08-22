@@ -218,12 +218,17 @@ class Pytler:
     def create_sockets(self):
         self.in_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.in_socket.connect(('10.255.255.255', 1))
-        self.out_socket.connect(('10.255.255.255', 1))
+        # self.in_socket.connect(('10.255.255.255', 1))
+        # self.out_socket.connect(('10.255.255.255', 1))
+        host = socket.gethostbyname(socket.gethostname())
+        print(host)
+        self.in_socket.bind((host, 8888))
+        self.out_socket.bind((host, 8889))
         print(self.in_socket.getsockname())
         print(self.out_socket.getsockname())
 
     def connect(self, host, in_port, out_port):
+        self.create_sockets()
         self.audio_comm = AudioCommunication(Sockets(self.in_socket, self.out_socket),
             Addresses((host, in_port), (host, out_port)),
             Audio(self.audio_recorder, self.audio_player),
@@ -236,6 +241,19 @@ class Pytler:
         self.audio_comm.stop()
 
 
+if __name__ == '__main__':
+    host = input('aaaa ')
+    p = Pytler()
+
+
+    #host = '192.168.1.8'
+    port1 = 8888
+    port2 = 8889
+    p.connect(host, port1, port2)
+    p.start_comm()
+    while bool(input('Press enter to stop')):
+        pass
+    p.stop_comm()
 
 
 
