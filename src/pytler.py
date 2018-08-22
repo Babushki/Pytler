@@ -9,15 +9,23 @@ import socket
 class Pytler:
 
     def __init__(self):
+
         self.nick = None
         self.password = None
         self.email = None
         self.description = None
+        self.activated = None
+        self.created_at = None
+        self.id = None
+        self.profile_image = None
+
         self.contacts = None
+
+        self.host = None
         self.in_socket = None
         self.out_socket = None
-        self.audio_recorder = AudioRecorder()
-        self.audio_player = AudioPlayer()
+        self.audio_recorder = None
+        self.audio_player = None
         self.audio_comm = None
 
     def register_user(self, login: str, password: str, email: str) -> bool:
@@ -50,6 +58,12 @@ class Pytler:
         r = requests.get(ADDRESS + '/api/user', auth=(self.nick,self.password))
         if r.ok:
             user_info = r.json()
+            self.email = user_info['email']
+            self.activated = user_info['activated']
+            self.profile_image = user_info['profile_image']
+            self.description = user_info['description']
+            self.created_at = user_info['created_at']
+            self.id = user_info['id']
             return user_info
         else:
             return False
@@ -94,10 +108,11 @@ class Pytler:
         else:
             return False
 
-    def get_contacts(self) -> Union[List[Dict[str, Union[str, int]]], bool]:
+    def get_contacts(self) -> bool:
         r = requests.get(ADDRESS + '/api/contacts', auth=(self.nick,self.password))
         if r.ok:
-            return r.json()
+            self.contacts = r.json()
+            return True
         else:
             return False
 
@@ -220,15 +235,15 @@ class Pytler:
         self.out_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.in_socket.connect(('10.255.255.255', 1))
         # self.out_socket.connect(('10.255.255.255', 1))
-        host = socket.gethostbyname(socket.gethostname())
-        print(host)
-        self.in_socket.bind((host, 8888))
-        self.out_socket.bind((host, 8889))
+        self.host = socket.gethostbyname(socket.gethostname())
+        self.in_socket.bind((self.host, 8888))
+        self.out_socket.bind((self.host, 8889))
         print(self.in_socket.getsockname())
         print(self.out_socket.getsockname())
 
     def connect(self, host, in_port, out_port):
-        self.create_sockets()
+        self.audio_recorder = AudioRecorder()
+        self.audio_player = AudioPlayer()
         self.audio_comm = AudioCommunication(Sockets(self.in_socket, self.out_socket),
             Addresses((host, in_port), (host, out_port)),
             Audio(self.audio_recorder, self.audio_player),
@@ -239,14 +254,23 @@ class Pytler:
 
     def stop_comm(self):
         self.audio_comm.stop()
+        self.audio_player.stream.stop_stream()
+        self.audio_player.stream.close()
+        self.audio_player.audio.terminate()
+        self.audio_player = None
+
+        self.audio_recorder.stream.stop_stream()
+        self.audio_recorder.stream.close()
+        self.audio_recorder.audio.terminate()
+        self.audio_recorder = None
 
 
 if __name__ == '__main__':
-    host = input('aaaa ')
+
     p = Pytler()
 
-
-    #host = '192.168.1.8'
+    p.create_sockets()
+    host = input('host')
     port1 = 8888
     port2 = 8889
     p.connect(host, port1, port2)
