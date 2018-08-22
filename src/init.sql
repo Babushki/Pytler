@@ -3,11 +3,13 @@ DROP DATABASE IF EXISTS pytler;
 CREATE DATABASE pytler;
 \connect pytler
 
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE users (
     id serial PRIMARY KEY,
-    login varchar(32) UNIQUE NOT NULL,
+    login citext UNIQUE NOT NULL,
     password varchar(64) NOT NULL,
-    email varchar(254) UNIQUE NOT NULL,
+    email citext UNIQUE NOT NULL,
     created_at bigint NOT NULL,
     activated boolean DEFAULT FALSE NOT NULL,
     profile_image text,
