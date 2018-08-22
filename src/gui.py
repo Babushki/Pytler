@@ -504,7 +504,7 @@ class GUI:
         remove = self.create_button('Usuń kontakt', action_bar, padx=(300,20), height=50, action=lambda: self.remove_contact(index))
         remove.pack(fill=BOTH, expand=1, side=RIGHT)
 
-        call = self.create_button('Zadzwoń', action_bar, padx=(20,20), height=50)
+        call = self.create_button('Zadzwoń', action_bar, padx=(20,20), height=50, action=lambda: self.make_call(index))
         call.pack(fill=BOTH, expand=1, side=RIGHT)
 
     def remove_contact(self, index):
@@ -521,6 +521,9 @@ class GUI:
     def delete_children(self, frame):
         for child in frame.winfo_children():
             child.destroy()
+
+    def make_call(self, index):
+        pass
 
     def main(self):
         self.view_login_or_register()

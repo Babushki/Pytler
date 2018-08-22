@@ -255,6 +255,7 @@ class Pytler:
         self.out_socket.bind((self.host, 8889))
         print(self.in_socket.getsockname())
         print(self.out_socket.getsockname())
+        return self.in_socket.getsockname(), self.out_socket.getsockname()
 
     def connect(self, host, in_port, out_port):
         self.audio_recorder = AudioRecorder()
