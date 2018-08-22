@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
 from pytler import Pytler
+import time
 
 
 class GUI:
@@ -213,7 +214,7 @@ class GUI:
         menu_frame.pack_propagate(0)
         menu_frame.pack()
 
-        content_frame = Frame(master=main_frame, bg='blue', width=800, height=350)
+        content_frame = Frame(master=main_frame, bg='white', width=800, height=350)
         content_frame.pack_propagate(0)
         content_frame.pack()
 
@@ -221,7 +222,7 @@ class GUI:
         action_bar.pack_propagate(0)
         action_bar.pack()
 
-        self.generate_topbar_content(menu_frame)
+        self.generate_topbar_content(menu_frame, content_frame, action_bar)
         self.generate_contacts(contact_frame, content_frame, action_bar)
         self.popup_invitations()
 
@@ -292,6 +293,9 @@ class GUI:
         if not entry_value:
             messagebox.showerror('Błąd', 'Nie wypełniono pola z nazwą użytkownika')
             return
+        if entry_value == self.pytler.nick:
+            messagebox.showerror('Błąd', 'Nie możesz zaprosić siebie do znajomych')
+            return
         r = self.pytler.invite_to_contacts(entry_value)
         if not r:
             messagebox.showerror('Błąd', 'Użytkownik o takim loginie nie istnieje')
@@ -300,12 +304,15 @@ class GUI:
             messagebox.showinfo('Gratulacje', f'Wysłano zaproszenie do użytkownika {entry_value}')
             popup.destroy()
 
-    def generate_topbar_content(self, topbar):
+    def generate_topbar_content(self, topbar, content_frame, action_bar):
 
-        home = self.create_button('Strona główna', topbar, padx=(300,20), height=50, action=self.main_view)
+        nickname = self.create_label(self.pytler.nick, topbar, height=50, padx=(180,20), fg='white', bg='black')
+        nickname.pack(fill=BOTH, expand=1, side=RIGHT)
+
+        home = self.create_button('Strona główna', topbar, padx=(20,20), height=50, action=self.main_view)
         home.pack(fill=BOTH, expand=1, side=RIGHT)
 
-        settings = self.create_button('Ustawienia', topbar, padx=(20,20), height=50)
+        settings = self.create_button('Ustawienia', topbar, padx=(20,20), height=50, action=lambda: self.show_settings(content_frame, action_bar))
         settings.pack(fill=BOTH, expand=1, side=RIGHT)
 
         logout = self.create_button('Wyloguj', topbar, padx=(20,20), height=50, action=self.logout)
@@ -317,7 +324,6 @@ class GUI:
         w = evt.widget
         index = int(w.curselection()[0])
         value = w.get(index)
-        print('You selected item %d: "%s"' % (index, value))
 
         self.delete_children(content_frame)
         self.delete_children(action_bar)
@@ -325,14 +331,76 @@ class GUI:
         self.generate_contact_info(index, content_frame)
         self.generate_action_bar_for_contact(index, action_bar)
 
-    def generate_contact_info(self, contact_number, content_frame):
-        image_frame = Frame(content_frame, width=300, height=300, bg='red')
-        image_frame.pack_propagate(0)
-        image_frame.pack(side=LEFT)
+    def show_settings(self, content_frame, action_bar):
+        self.delete_children(content_frame)
+        self.delete_children(action_bar)
 
-        image_frame = Frame(content_frame, width=300, height=300, bg='green')
-        image_frame.pack_propagate(0)
-        image_frame.pack(side=LEFT)
+        self.generate_content_for_settings(content_frame)
+        self.generate_action_bar_for_settings(action_bar)
+
+    def generate_content_for_settings(self, content_frame):
+        frame = Frame(master=content_frame, bg='white', pady=20)
+        frame.pack()
+
+        img_label = self.create_label(f'Zdjęcie profilowe:', frame, width= 150)
+        img_label.pack(fill=BOTH, expand=1, side=LEFT)
+
+        frame_img = Frame(master=frame, bg='red', width=150, height=150)
+        frame_img.pack_propagate(0)
+        frame_img.pack(fill=BOTH, expand=1, side=LEFT)
+
+
+        frame1 = Frame(master=content_frame, bg='black')
+        frame1.pack()
+
+        email_label = self.create_label(f'Email: {self.pytler.email}', frame1, width=800)
+        email_label.pack(fill=BOTH, expand=1, side=TOP)
+        frame2 = Frame(master=content_frame, bg='black')
+        frame2.pack()
+
+        created_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(self.pytler.created_at))
+
+        date_label = self.create_label(f'Konto utworzone: {created_at}', frame2, width=800)
+        date_label.pack(fill=BOTH, expand=1, side=TOP)
+
+        frame3 = Frame(master=content_frame, bg='black')
+        frame3.pack()
+        if self.pytler.description:
+            desc_label = self.create_label(f'Opis: {self.pytler.description}', frame3, width=800, height=100)
+            desc_label.pack(fill=BOTH, expand=1, side=TOP)
+        else:
+            desc_label = self.create_label(f'Opis: Brak', frame3, width=800, height=100)
+            desc_label.pack(fill=BOTH, expand=1, side=TOP)
+
+
+    def generate_action_bar_for_settings(self, action_bar):
+        pass
+
+    def generate_contact_info(self, contact_number, content_frame):
+        frame = Frame(master=content_frame, bg='white', pady=20)
+        frame.pack()
+
+        img_label = self.create_label(f'Zdjęcie profilowe:', frame, width= 150)
+        img_label.pack(fill=BOTH, expand=1, side=LEFT)
+
+        frame_img = Frame(master=frame, bg='red', width=150, height=150)
+        frame_img.pack_propagate(0)
+        frame_img.pack(fill=BOTH, expand=1, side=LEFT)
+
+        frame1 = Frame(master=content_frame, bg='black')
+        frame1.pack()
+
+        nick_label = self.create_label(f'Nick: {self.pytler.contacts[contact_number]["login"]}', frame1, width=800)
+        nick_label.pack(fill=BOTH, expand=1, side=TOP)
+
+        frame3 = Frame(master=content_frame, bg='black')
+        frame3.pack()
+        if self.pytler.contacts[contact_number]['description']:
+            desc_label = self.create_label(f'Opis: {self.pytler.contacts[contact_number]["description"]}', frame3, width=800, height=100)
+            desc_label.pack(fill=BOTH, expand=1, side=TOP)
+        else:
+            desc_label = self.create_label(f'Opis: Brak', frame3, width=800, height=100)
+            desc_label.pack(fill=BOTH, expand=1, side=TOP)
 
     def generate_action_bar_for_contact(self, index, action_bar):
         remove = self.create_button('Usuń kontakt', action_bar, padx=(300,20), height=50, action=lambda: self.remove_contact(index))
