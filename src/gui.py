@@ -20,6 +20,7 @@ class GUI:
         self.pytler = Pytler()
         self.logged = False
         self.update_session()
+        self.settings = None
 
     def update_session(self):
         if self.logged:
@@ -85,6 +86,9 @@ class GUI:
             messagebox.showwarning('Błąd', 'Nie wszystkie pola zostały wypełnione')
             return
 
+        if len(login)>32:
+            messagebox.showerror('Błąd', 'Maksymalna długość loginu to 32 znaki')
+            return
         if not self.check_password(password):
             messagebox.showwarning('Błąd', 'Hasło powinno mieć co najmniej 8 znaków długości oraz zawierać minimum jedną cyfrę, jedną małą literę oraz jedną wielką literę')
             return
@@ -278,17 +282,6 @@ class GUI:
         add_button.pack(fill=BOTH, expand=1, side=TOP)
 
 
-    def popup(self, title, text, button_text, button_action):
-        popup = Toplevel()
-        popup.title(title)
-        label = self.create_label(text, popup, fg='white', bg='black')
-        entry = self.create_entry(popup)
-        label.pack(fill=BOTH, expand=1)
-        entry.pack(fill=BOTH, expand=1)
-        entry.config(font=self.font)
-        button = self.create_button(button_text, popup, action=lambda: button_action(popup, entry.get()), height=40, fg='white', bg='black')
-        button.pack(fill=BOTH, expand=1)
-
     def popup_add_contact(self, popup, entry_value):
         if not entry_value:
             messagebox.showerror('Błąd', 'Nie wypełniono pola z nazwą użytkownika')
@@ -312,8 +305,8 @@ class GUI:
         home = self.create_button('Strona główna', topbar, padx=(20,20), height=50, action=self.main_view)
         home.pack(fill=BOTH, expand=1, side=RIGHT)
 
-        settings = self.create_button('Ustawienia', topbar, padx=(20,20), height=50, action=lambda: self.show_settings(content_frame, action_bar))
-        settings.pack(fill=BOTH, expand=1, side=RIGHT)
+        self.settings = self.create_button('Ustawienia', topbar, padx=(20,20), height=50, action=lambda: self.show_settings(content_frame, action_bar))
+        self.settings.pack(fill=BOTH, expand=1, side=RIGHT)
 
         logout = self.create_button('Wyloguj', topbar, padx=(20,20), height=50, action=self.logout)
         logout.pack(fill=BOTH, expand=1, side=RIGHT)
@@ -323,7 +316,6 @@ class GUI:
         #TODO wyświetlanie info
         w = evt.widget
         index = int(w.curselection()[0])
-        value = w.get(index)
 
         self.delete_children(content_frame)
         self.delete_children(action_bar)
@@ -374,7 +366,109 @@ class GUI:
 
 
     def generate_action_bar_for_settings(self, action_bar):
-        pass
+        change_desc_button = self.create_button('Zmień opis', action_bar, padx=(150,20), height=50, action=lambda: self.popup('Zmiana opisu', 'Nowy opis', 'Zmień', self.popup_change_desc))
+        change_desc_button.pack(fill=BOTH, expand=1, side=RIGHT)
+
+        change_password_button = self.create_button('Zmień hasło', action_bar, padx=(20,20), height=50, action=self.popup_password)
+        change_password_button.pack(fill=BOTH, expand=1, side=RIGHT)
+
+        change_email_button = self.create_button('Zmień email', action_bar, padx=(20,20), height=50, action=lambda: self.popup('Zmiana adresu email', 'Nowy adres', 'Zmień', self.popup_change_email))
+        change_email_button.pack(fill=BOTH, expand=1, side=RIGHT)
+
+        change_img_button = self.create_button('Zmień zdjęcie', action_bar, padx=(20,20), height=50)
+        change_img_button.pack(fill=BOTH, expand=1, side=RIGHT)
+
+    def popup_password(self):
+        popup = Toplevel()
+        popup.title('Zmiana hasła')
+        popup.config(bg='white')
+
+        frame = Frame(popup)
+        frame.pack()
+        label = self.create_label('Nowe hasło', frame, fg='white', bg='black')
+        entry = self.create_entry(frame)
+        entry.config(show='*')
+        label.pack(fill=BOTH, expand=1)
+        entry.pack(fill=BOTH, expand=1)
+        entry.config(font=self.font)
+
+        frame1 = Frame(popup)
+        frame1.pack()
+        label1 = self.create_label('Powtórz hasło', frame1, fg='white', bg='black')
+        entry1 = self.create_entry(frame1)
+        entry1.config(show='*')
+        label1.pack(fill=BOTH, expand=1)
+        entry1.pack(fill=BOTH, expand=1)
+        entry1.config(font=self.font)
+
+        button = self.create_button('Zmień', popup, height=40, fg='white', bg='black', width=250, action=lambda: self.change_pass(entry.get(), entry1.get()))
+        button.pack(fill=BOTH, expand=1)
+
+    def change_pass(self, password, confirm):
+        if not password or not confirm:
+            messagebox.showwarning('Błąd', 'Nie wszystkie pola zostały wypełnione')
+            return
+
+        if not self.check_password(password):
+            messagebox.showwarning('Błąd', 'Hasło powinno mieć co najmniej 8 znaków długości oraz zawierać minimum jedną cyfrę, jedną małą literę oraz jedną wielką literę')
+            return
+
+        if password!=confirm:
+            messagebox.showwarning('Błąd', 'Hasło oraz potwierdzone hasło muszą być identyczne')
+            return
+
+        r = self.pytler.change_password(password)
+        if not r:
+            messagebox.showwarning('Błąd', 'Nie udało się zmienić hasła')
+            return
+        else:
+            messagebox.showinfo('Gratulacje', f'Poprawnie zmieniono hasło')
+            self.settings.invoke()
+
+    def popup_change_desc(self, popup, entry_value):
+        if not entry_value:
+            messagebox.showerror('Błąd', 'Nie wypełniono pola z nowym opisem')
+            return
+        if len(entry_value) > 100:
+            messagebox.showerror('Błąd', 'Maksymalna długość opisu to 100 znaków')
+            return
+        r = self.pytler.change_description(entry_value)
+        if not r:
+            messagebox.showerror('Błąd', 'Nie udało się zmienić opisu')
+            return
+        else:
+            messagebox.showinfo('Gratulacje', f'Poprawnie zmieniono opis')
+            self.pytler.description = entry_value
+            self.settings.invoke()
+            popup.destroy()
+
+    def popup_change_email(self, popup, entry_value):
+        if not entry_value:
+            messagebox.showerror('Błąd', 'Nie wypełniono pola z nowym adresem email')
+            return
+        r = self.pytler.change_email(entry_value)
+        if not r:
+            messagebox.showerror('Błąd', 'Nie udało się zmienić adresu email')
+            return
+        else:
+            messagebox.showinfo('Gratulacje', f'Poprawnie zmieniono adres email')
+            self.pytler.description = entry_value
+            self.settings.invoke()
+            popup.destroy()
+
+    def popup(self, title, text, button_text, button_action, show=None):
+        popup = Toplevel()
+        popup.title(title)
+        label = self.create_label(text, popup, fg='white', bg='black')
+        entry = self.create_entry(popup)
+        if show is not None:
+            entry.config(show=show)
+        label.pack(fill=BOTH, expand=1)
+        entry.pack(fill=BOTH, expand=1)
+        entry.config(font=self.font)
+        button = self.create_button(button_text, popup, action=lambda: button_action(popup, entry.get()), height=40, fg='white', bg='black')
+        button.pack(fill=BOTH, expand=1)
+
 
     def generate_contact_info(self, contact_number, content_frame):
         frame = Frame(master=content_frame, bg='white', pady=20)
