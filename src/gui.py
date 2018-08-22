@@ -196,33 +196,34 @@ class GUI:
         main_frame.pack_propagate(0)
         main_frame.pack(side=LEFT)
 
-        self.generate_contacts(contact_frame)
-
         menu_frame = Frame(master=main_frame, bg='black', width=800, height=70)
         menu_frame.pack_propagate(0)
         menu_frame.pack()
 
-        self.generate_topbar_content(menu_frame)
+
 
         content_frame = Frame(master=main_frame, bg='blue', width=800, height=350)
         content_frame.pack_propagate(0)
         content_frame.pack()
 
-        action_bar = Frame(master=main_frame, bg='green', width=800, height=80)
+        action_bar = Frame(master=main_frame, bg='black', width=800, height=80)
         action_bar.pack_propagate(0)
         action_bar.pack()
 
-    def generate_contacts(self, root):
+        self.generate_topbar_content(menu_frame)
+        self.generate_contacts(contact_frame, content_frame, action_bar)
+
+    def generate_contacts(self, contact_frame, content_frame, action_bar):
         r = self.pytler.get_contacts()
         if not r:
             messagebox.showwarning('Błąd', 'Błąd podczas wczytywania kontaktów')
 
-        frame = Frame(master=root, bg='black')
+        frame = Frame(master=contact_frame, bg='black')
         frame.pack()
         label = self.create_label('Kontakty', frame, width = 200, pady=(20,0), fg='white', bg='black')
         label.pack(fill=BOTH, expand=1, side=TOP)
 
-        frame2 = Frame(master=root, bg='black', height=350, width=200)
+        frame2 = Frame(master=contact_frame, bg='black', height=350, width=200)
         frame2.pack(pady=10)
         frame2.pack_propagate(0)
         scrollbar = Scrollbar(frame2)
@@ -234,12 +235,36 @@ class GUI:
                 contact_list.insert(END, contact['login'])
         contact_list.pack( side = LEFT, fill = BOTH )
 
-        contact_list.bind('<<ListboxSelect>>', lambda evt: self.onselect(evt, 1))
+        contact_list.bind('<<ListboxSelect>>', lambda evt: self.onselect(evt, content_frame, action_bar))
 
-        frame1 = Frame(master=root, bg='black')
+        frame1 = Frame(master=contact_frame, bg='black')
         frame1.pack()
-        add_button = self.create_button('Dodaj kontakt +', frame1, width = 150, height=60, fg='black', bg='white')
+        add_button = self.create_button('Dodaj kontakt +', frame1, width = 150, height=60, fg='black', bg='white', action=lambda: self.popup('Wyślij zaproszenie', 'Login', 'Wyślij', self.popup_add_contact))
         add_button.pack(fill=BOTH, expand=1, side=TOP)
+
+
+    def popup(self, title, text, button_text, button_action):
+        popup = Toplevel()
+        popup.title(title)
+        label = self.create_label(text, popup, fg='white', bg='black')
+        entry = self.create_entry(popup)
+        label.pack(fill=BOTH, expand=1)
+        entry.pack(fill=BOTH, expand=1)
+        entry.config(font=self.font)
+        button = self.create_button(button_text, popup, action=lambda: button_action(popup, entry.get()), height=40, fg='white', bg='black')
+        button.pack(fill=BOTH, expand=1)
+
+    def popup_add_contact(self, popup, entry_value):
+        if not entry_value:
+            messagebox.showerror('Błąd', 'Nie wypełniono pola z nazwą użytkownika')
+            return
+        r = self.pytler.invite_to_contacts(entry_value)
+        if not r:
+            messagebox.showerror('Błąd', 'Użytkownik o takim loginie nie istnieje')
+            return
+        else:
+            messagebox.showinfo('Gratulacje', f'Wysłano zaproszenie do użytkownika {entry_value}')
+            popup.destroy()
 
     def generate_topbar_content(self, topbar):
 
@@ -252,15 +277,49 @@ class GUI:
         logout = self.create_button('Wyloguj', topbar, padx=(20,20), height=50)
         logout.pack(fill=BOTH, expand=1, side=RIGHT)
 
-    def onselect(self, evt, a):
+    def onselect(self, evt, content_frame, action_bar):
         #TODO wyświetlanie info
         w = evt.widget
         index = int(w.curselection()[0])
         value = w.get(index)
         print('You selected item %d: "%s"' % (index, value))
 
+        self.delete_children(content_frame)
+        self.delete_children(action_bar)
 
+        self.generate_contact_info(index, content_frame)
+        self.generate_action_bar_for_contact(index, action_bar)
 
+    def generate_contact_info(self, contact_number, content_frame):
+        image_frame = Frame(content_frame, width=300, height=300, bg='red')
+        image_frame.pack_propagate(0)
+        image_frame.pack(side=LEFT)
+
+        image_frame = Frame(content_frame, width=300, height=300, bg='green')
+        image_frame.pack_propagate(0)
+        image_frame.pack(side=LEFT)
+
+    def generate_action_bar_for_contact(self, index, action_bar):
+        remove = self.create_button('Usuń kontakt', action_bar, padx=(300,20), height=50, action=lambda: self.remove_contact(index))
+        remove.pack(fill=BOTH, expand=1, side=RIGHT)
+
+        call = self.create_button('Zadzwoń', action_bar, padx=(20,20), height=50)
+        call.pack(fill=BOTH, expand=1, side=RIGHT)
+
+    def remove_contact(self, index):
+        try:
+            r = self.pytler.delete_from_contacts(self.pytler.contacts[index]['login'])
+            if r:
+                messagebox.showinfo('Udało się!', 'Kontakt został poprawnie usunięty')
+                self.main_view()
+                return
+        except IndexError:
+            pass
+        messagebox.showerror('Błąd!', 'Nie udało się usunać kontaktu')
+
+    def delete_children(self, frame):
+        for child in frame.winfo_children():
+            child.destroy()
 
     def main(self):
         self.view_login_or_register()
