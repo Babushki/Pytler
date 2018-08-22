@@ -2,7 +2,7 @@ import requests
 from typing import Dict, List, Union
 import hashlib
 
-ADDRESS = 'http://127.0.0.1:8080'
+ADDRESS = 'http://192.168.1.6:8080'
 
 from audio_communication import Addresses, Sockets, AudioCommunication, Audio, AudioRecorder, AudioPlayer
 import socket

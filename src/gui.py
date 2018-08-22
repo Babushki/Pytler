@@ -26,6 +26,7 @@ class GUI:
         self.calling = False
         self.in_call = False
         self.check_incoming_calls()
+        self.call_session = False
 
     def update_session(self):
         if self.logged:
@@ -220,7 +221,8 @@ class GUI:
 
 
     def main_view(self):
-        self.reset_back()
+        #self.reset_back()
+        self.delete_children(self.back)
         self.root.geometry('1000x500')
 
         self.in_call = False
@@ -553,18 +555,24 @@ class GUI:
                 for call in pending_calls:
                     result = messagebox.askquestion(f'Połączenie przychodzące od {call["login"]}', f'Czy chcesz odebrać od {call["login"]}?')
                     if result=='yes':
+                        self.create_call_session(call['id'])
                         in_port, out_port = self.pytler.create_sockets()
                         host = self.pytler.host
                         self.pytler.create_new_pending_call(call['id'], host, in_port, out_port)
                         self.in_call = True
                         self.pytler.connect(call['host'], call['port'], call['port2'])
                         self.pytler.start_comm()
-                        self.answer_call(call['login'])
+                        self.answer_call(call['login'], call['id'])
                     elif result=='no':
                        self.pytler.delete_pending_call(call['id'])
         self.back.after(100, self.check_incoming_calls)
 
-    def answer_call(self, login):
+    def create_call_session(self, id):
+        self.pytler.create_new_callsession(id)
+        self.call_session=True
+
+
+    def answer_call(self, login, id):
         self.delete_children(self.back)
         self.root.geometry('400x100')
         self.pytler.delete_pending_call()
@@ -574,8 +582,23 @@ class GUI:
         button = self.create_button('Rozłącz', self.back, action=self.end_call, padx=(10,20), height=40)
         button.pack(fill=BOTH, expand=1, side=TOP)
 
+        self.update_call_session(id)
+
+
+    def update_call_session(self, id):
+        if self.call_session == True:
+            if self.pytler.get_user_callsession_status(id)['status'] == 'active':
+                self.pytler.extend_callsession(id)
+                self.back.after(1000, lambda: self.update_call_session(id))
+            else:
+                self.call_session=False
+                self.end_call()
+        else:
+            self.end_call()
+
     def end_call(self):
         self.in_call = False
+        self.call_session = False
         self.pytler.stop_comm()
         self.main_view()
 
@@ -605,12 +628,13 @@ class GUI:
         pending_calls = self.pytler.get_pending_calls()
         for call in pending_calls:
             if call['id'] == self.calling_id:
+                self.create_call_session(call['id'])
                 self.calling = False
                 self.in_call = True
                 self.pytler.delete_pending_call(call['id'])
                 self.pytler.connect(call['host'], call['port'], call['port2'])
                 self.pytler.start_comm()
-                self.answer_call(call['login'])
+                self.answer_call(call['login'], call['id'])
 
         if self.calling:
             self.root.after(100, self.check_if_call_answered)
