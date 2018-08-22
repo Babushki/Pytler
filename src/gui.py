@@ -3,6 +3,7 @@ from tkinter import messagebox
 from tkinter.filedialog import askopenfilename
 from pytler import Pytler
 import time
+import re
 
 
 class GUI:
@@ -92,6 +93,9 @@ class GUI:
         if not self.check_password(password):
             messagebox.showwarning('Błąd', 'Hasło powinno mieć co najmniej 8 znaków długości oraz zawierać minimum jedną cyfrę, jedną małą literę oraz jedną wielką literę')
             return
+        if not self.check_email(email):
+            messagebox.showwarning('Błąd', 'Niepoprawny adres e-mail')
+            return
 
         if password!=confirm:
             messagebox.showwarning('Błąd', 'Hasło oraz potwierdzone hasło muszą być identyczne')
@@ -126,6 +130,9 @@ class GUI:
             return False
         else:
             return True
+
+    def check_email(self, email):
+        return bool(re.match('[^@]+@[^@]+\.[^@]+', email))
 
     def create_row_reg(self, text):
         frame = Frame(master=self.back, bg='black', pady=20)
@@ -449,6 +456,9 @@ class GUI:
     def popup_change_email(self, popup, entry_value):
         if not entry_value:
             messagebox.showerror('Błąd', 'Nie wypełniono pola z nowym adresem email')
+            return
+        if not self.check_email(entry_value):
+            messagebox.showerror('Błąd', 'Niepoprawny adres e-mail')
             return
         r = self.pytler.change_email(entry_value)
         if not r:
