@@ -612,7 +612,7 @@ class GUI:
                         self.answer_call(call['login'], call['id'])
                     elif result=='no':
                        self.pytler.delete_pending_call(call['id'])
-        self.back.after(100, self.check_incoming_calls)
+        self.back.after(1000, self.check_incoming_calls)
 
     def create_call_session(self, id):
         self.pytler.create_new_callsession(id)
