@@ -413,10 +413,10 @@ class PendingCallsService:
 if __name__ == '__main__':
 
     config = {
-        'server.socket_host': '127.0.0.1',
+        'server.socket_host': '192.168.43.131',
         'server.socket_port': 8080,
         'tools.auth_basic.on': True,
-        'tools.auth_basic.realm': '127.0.0.1',
+        'tools.auth_basic.realm': '192.168.43.131',
         'tools.auth_basic.checkpassword': validate_password,
     }
     without_authentication = {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher(), 'tools.auth_basic.on': False}}

@@ -591,6 +591,7 @@ class GUI:
                 self.pytler.extend_callsession(id)
                 self.back.after(1000, lambda: self.update_call_session(id))
             else:
+                messagebox.showinfo('Koniec rozmowy', 'Rozmówca rozłączył się')
                 self.call_session=False
                 self.end_call()
         else:
