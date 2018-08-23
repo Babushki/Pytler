@@ -31,6 +31,7 @@ class GUI:
         self.call_session = False
         self.profile_image = None
         self.image_raw = None
+        self.show_invitations = True
 
     def update_session(self):
         if self.logged:
@@ -260,21 +261,27 @@ class GUI:
 
     def popup_invitations(self):
         r = self.pytler.get_invitations()
+        if r:
+            if self.show_invitations:
+                for i in r['my_invitations']:
+                    self.show_invitations = False
+                    result = messagebox.askquestion(f'Masz zaproszenie od {i["login"]}', f'Czy chcesz dodać {i["login"]} do znajomych?')
+                    if result=='yes':
+                        self.show_invitations = True
+                        r1 = self.pytler.accept_invitation(i['invitation_id'])
+                        if r1:
+                            messagebox.showinfo('Gratulacje', f'Poprawnie dodano {i["login"]} do znajomych')
+                            self.main_view()
+                        else:
+                            messagebox.showerror('Błąd', f'Nie udało się dodać {i["login"]} do znajomych')
+                    elif result=='no':
+                        self.show_invitations = True
+                        r1 = self.pytler.decline_invitation(i['invitation_id'])
 
-        for i in r['my_invitations']:
-            result = messagebox.askquestion(f'Masz zaproszenie od {i["login"]}', f'Czy chcesz dodać {i["login"]} do znajomych?')
-            if result=='yes':
-                r1 = self.pytler.accept_invitation(i['invitation_id'])
-                if r1:
-                    messagebox.showinfo('Gratulacje', f'Poprawnie dodano {i["login"]} do znajomych')
-                    self.main_view()
-                else:
-                    messagebox.showerror('Błąd', f'Nie udało się dodać {i["login"]} do znajomych')
-            elif result=='no':
-                r1 = self.pytler.decline_invitation(i['invitation_id'])
+                for i in r['rejected_invitations']:
+                    messagebox.showinfo('Ojej', f'{i["login"]} odrzucił twoje zaproszenie')
 
-        for i in r['rejected_invitations']:
-            messagebox.showinfo('Ojej', f'{i["login"]} odrzucił twoje zaproszenie')
+        self.root.after(1000, lambda: self.popup_invitations())
 
     def generate_contacts(self, contact_frame, content_frame, action_bar):
         r = self.pytler.get_contacts()
@@ -312,7 +319,7 @@ class GUI:
                     contact_list.itemconfig(i, foreground='green')
                 elif status == 'inactive':
                     contact_list.itemconfig(i, foreground='red')
-        contact_list.after(5000, lambda: self.update_contacts(contact_list))
+        contact_list.after(1000, lambda: self.update_contacts(contact_list))
 
     def popup_add_contact(self, popup, entry_value):
         if not entry_value:
