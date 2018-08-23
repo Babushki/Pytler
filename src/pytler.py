@@ -80,6 +80,7 @@ class Pytler:
         #TODO sprawdzanie poprawności mejla
         r = requests.put(ADDRESS + '/api/user', auth=(self.nick,self.password), json={'email':new_email})
         if r.ok:
+            self.email = new_email
             return True
         else:
             return False
@@ -87,6 +88,7 @@ class Pytler:
     def change_description(self, new_description: str) -> bool:
         r = requests.put(ADDRESS + '/api/user', auth=(self.nick,self.password), json={'description':new_description})
         if r.ok:
+            self.description = new_description
             return True
         else:
             return False
@@ -94,6 +96,7 @@ class Pytler:
     def change_profile_image(self, new_image: str) -> bool:
         r = requests.put(ADDRESS + '/api/user', auth=(self.nick,self.password), json={'profile_image':new_image})
         if r.ok:
+            self.profile_image = new_image
             return True
         else:
             return False

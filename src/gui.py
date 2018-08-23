@@ -4,6 +4,8 @@ from tkinter.filedialog import askopenfilename
 from pytler import Pytler
 import time
 import re
+import cv2
+from base64 import b64encode, b64decode
 
 
 class GUI:
@@ -27,6 +29,8 @@ class GUI:
         self.in_call = False
         self.check_incoming_calls()
         self.call_session = False
+        self.profile_image = None
+        self.image_raw = None
 
     def update_session(self):
         if self.logged:
@@ -368,6 +372,12 @@ class GUI:
         frame_img.pack_propagate(0)
         frame_img.pack(fill=BOTH, expand=1, side=LEFT)
 
+        if self.pytler.profile_image:
+            self.image_raw = self.pytler.profile_image
+            self.profile_image = PhotoImage(format='png', data=self.image_raw)
+            contact_image = Label(frame_img, image=self.profile_image, width=150, height=150)
+            #contact_image.pack_propagate(0)
+            contact_image.pack(fill=BOTH, expand=1, side=LEFT)
 
         frame1 = Frame(master=content_frame, bg='black')
         frame1.pack()
@@ -402,8 +412,30 @@ class GUI:
         change_email_button = self.create_button('Zmień email', action_bar, padx=(20,20), height=50, action=lambda: self.popup('Zmiana adresu email', 'Nowy adres', 'Zmień', self.popup_change_email))
         change_email_button.pack(fill=BOTH, expand=1, side=RIGHT)
 
-        change_img_button = self.create_button('Zmień zdjęcie', action_bar, padx=(20,20), height=50)
+        change_img_button = self.create_button('Zmień zdjęcie', action_bar, padx=(20,20), height=50, action=self.change_img)
         change_img_button.pack(fill=BOTH, expand=1, side=RIGHT)
+
+    def change_img(self):
+        path = askopenfilename(initialdir="C:/",
+                           filetypes =(("PNG", "*.png"),("All Files","*.*")),
+                           title = "Choose a file.")
+        print(path)
+        if len(path)>0:
+            img_cv = cv2.imread(path)
+            if img_cv is not None:
+                height, width, _ = img_cv.shape
+                if height > 150 or width > 150:
+                    messagebox.showerror('Błąd', 'Maksymalny rozmiar obrazka to 150x150px')
+                else:
+                    _, buffer = cv2.imencode('.png', img_cv)
+                    encoded_img = str(b64encode(buffer))[2:-1]
+                    self.pytler.change_profile_image(encoded_img)
+                    messagebox.showinfo('Gratulacje', f'Poprawnie zmieniono zdjęcie')
+                    self.settings.invoke()
+            else:
+                messagebox.showerror('Błąd', 'Wybrano plik o niepoprawnym formacie')
+        else:
+            return
 
     def popup_password(self):
         popup = Toplevel()
@@ -510,6 +542,13 @@ class GUI:
         frame_img = Frame(master=frame, bg='red', width=150, height=150)
         frame_img.pack_propagate(0)
         frame_img.pack(fill=BOTH, expand=1, side=LEFT)
+
+        if self.pytler.contacts[contact_number]["profile_image"]:
+            self.image_raw = self.pytler.contacts[contact_number]["profile_image"]
+            self.profile_image = PhotoImage(format='png', data=self.image_raw)
+            contact_image = Label(frame_img, image=self.profile_image, width=150, height=150)
+            #contact_image.pack_propagate(0)
+            contact_image.pack(fill=BOTH, expand=1, side=LEFT)
 
         frame1 = Frame(master=content_frame, bg='black')
         frame1.pack()
