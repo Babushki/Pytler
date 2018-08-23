@@ -14,6 +14,9 @@ CREATE TABLE users (
     description varchar(100)
 );
 
+CREATE UNIQUE INDEX login_unique_index on users (LOWER(login));
+CREATE UNIQUE INDEX email_unique_index on users (LOWER(email));
+
 CREATE TABLE call_history (
     id serial PRIMARY KEY,
     caller_id int NOT NULL REFERENCES users(id) ON DELETE CASCADE,
