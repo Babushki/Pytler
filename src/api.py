@@ -350,7 +350,7 @@ class CallSessionsService:
 
     def PUT(self, conversator_id, status):
         if status == 'extend':
-            query1 = """UPDATE call_sessions SET expiration_date = extract(epoch from now() + interval '2 seconds') WHERE user_id = %s AND expiration_date > extract(epoch from now()) AND conversator_id = %s"""
+            query1 = """UPDATE call_sessions SET expiration_date = extract(epoch from now() + interval '3 seconds') WHERE user_id = %s AND expiration_date > extract(epoch from now()) AND conversator_id = %s"""
             query2 = """SELECT id FROM users WHERE login = %s;"""
             with PYTLER_DB as db:
                 user_id = db.execute(query2, (cherrypy.request.login,), ResultSet.ONE)[0]

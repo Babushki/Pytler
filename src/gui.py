@@ -228,6 +228,7 @@ class GUI:
         #self.reset_back()
         self.delete_children(self.back)
         self.root.geometry('1000x500')
+        self.pytler.delete_pending_call()
 
         self.in_call = False
         self.calling = False
@@ -621,12 +622,12 @@ class GUI:
         button = self.create_button('Rozłącz', self.back, action=self.end_call, padx=(10,20), height=40)
         button.pack(fill=BOTH, expand=1, side=TOP)
 
-        self.update_call_session(id)
+        self.back.after(1000, lambda: self.update_call_session(id))
 
 
     def update_call_session(self, id):
         if self.call_session == True:
-            if self.pytler.get_user_callsession_status(id)['status'] == 'active':
+            if self.pytler.get_user_callsession_status(id) == 'active':
                 self.pytler.extend_callsession(id)
                 self.back.after(1000, lambda: self.update_call_session(id))
             else:

@@ -205,7 +205,9 @@ class Pytler:
     def get_user_callsession_status(self, user_id: int = None) -> Dict[str, str]:
         r = requests.get(ADDRESS + '/api/callsessions', auth=(self.nick,self.password), params={'user_id':user_id})
         if r.ok:
-            return r.json()
+            return r.json()['status']
+        else:
+            return 'active'
 
     def create_new_callsession(self, conversator_id: int) -> bool:
         r = requests.post(ADDRESS + '/api/callsessions', auth=(self.nick,self.password), params={'conversator_id': conversator_id})
